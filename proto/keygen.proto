@@ -2,3 +2,7 @@ syntax = "proto3";
 
 include grpc;
 
+message keygenNotif {
+    string keyAmount = 1;
+    string keygenTime = 2;
+}
