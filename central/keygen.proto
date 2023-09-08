@@ -10,4 +10,3 @@ message keygenNotif {
 service KeygenService {
     rpc Keygen(keygenNotif) returns (stream keygenNotif);
 }
-```
