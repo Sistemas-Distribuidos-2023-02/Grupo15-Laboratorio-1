@@ -3,7 +3,7 @@
 # Integrantes
 * Dante Aspee - Rol 
 * Vicente Gaete - Rol 202004604-2
-* Bernardo Pinninghoff - Rol 201973543-8
+* Bernardo Pinninghoff - Rol 201973543-
 
 # Getting started
 
