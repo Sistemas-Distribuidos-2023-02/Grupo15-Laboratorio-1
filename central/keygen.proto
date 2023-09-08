@@ -1,8 +1,13 @@
 syntax = "proto3";
+package keygen;
 
 include grpc;
 
 message keygenNotif {
     string keyAmount = 1;
-    string keygenTime = 2;
 }
+
+service KeygenService {
+    rpc Keygen(keygenNotif) returns (stream keygenNotif);
+}
+```
