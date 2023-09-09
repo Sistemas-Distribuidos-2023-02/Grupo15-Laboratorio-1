@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package betakeys;
+
+option go_package = ""
+
+message KeyNotification {
+    string keygenNumber = 1;
+}
+
+service KeygenService {
+    rpc NotifyRegionalServers(KeyNotification) returns (google.protobuf.Empty);
+}
