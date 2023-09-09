@@ -1,7 +1,8 @@
-package central
+package server
 
 import (
 	"log"
+
 	"golang.org/x/net/context"
 )
 
