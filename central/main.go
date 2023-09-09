@@ -4,32 +4,40 @@ import (
 	"context"
 	"log"
 	"net"
+	"fmt"
+	"io/ioutil"
+	"strings"
+	"strconv"
 
-	pb "github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/tree/main/central/proto"
 	"google.golang.org/grpc"
 )
 
-type server struct {
-	pb.UnimplementedCentralServer
-}
+type server struct {}
 
-func (s *server) Keygen(ctx context.Context, message *pb.Message) (*pb.Message, error) {
-	log.Printf("Received message body from client: %s", message.Body)
-	return &pb.Message{Body: "0"}, nil
+func startupParameters(filePath string) (minKey, maxKey int, err error) {
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	cotas := strings.Split(string(content), "-")
+	if len(cotas) != 2 {
+		return 0, 0, fmt.Errorf("invalid file format in parametros_de_inicio.txt")
+	}
+
+	minKey, err = strconv.Atoi(strings.TrimSpace(cotas[0]))
+	if err != nil {
+		return 0, 0, err
+	}
+
+	maxKey, err = strconv.Atoi(strings.TrimSpace(cotas[1]))
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return minKey, maxKey, nil
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":8080")
 
-	if err != nil {
-		panic("cannot create tcp server" + err.Error())
-	}
-
-	serv := grpc.NewServer()
-
-	pb.RegisterCentralServer(serv, &server{})
-
-	if err = serv.Serve(listener); err != nil {
-		panic("cannot initialize grpc server" + err.Error())
-	}
 }
