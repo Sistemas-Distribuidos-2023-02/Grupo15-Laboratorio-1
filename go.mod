@@ -7,9 +7,3 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.31.0
 )
-
-module keygen
-
-import (
-	"central/proto/keygen"
-)
