@@ -11,11 +11,19 @@ import (
 	"math/rand"
 	"time"
 
+	""
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type server struct {}
+
+func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
+	keygenNumber := request.KeygenNumber
+	fmt.Printf("Received notification: %d keys generated\n", keygenNumber)
+	return &emptypb.Empty{}, nil
+}
 
 func startupParameters(filePath string) (minKey, maxKey int, err error) {
 	content, err := ioutil.ReadFile(filePath)
@@ -54,6 +62,27 @@ func keygen(minKey, maxKey int) []int {
 }
 
 func main() {
+	// Create and set up gRPC server
+	grpcServer := grpc.NewServer()
+
+	betakeys.RegisterBetaKeysServer(grpcServer, &server{})
+
+	reflection.Register(grpcServer)
+
+	listener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		fmt.Printf("Failed to listen: %v\n", err)
+		return
+	}
+
+	// Start gRPC server
+	fmt.Println("Starting gRPC server on port: 50051")
+	if err := grpcServer.Serve(listener); err != nil {
+		fmt.Printf("Failed to serve: %v\n", err)
+		return
+	}
+
+	// Generate keys
 	filePath := "./parametros_de_inicio.txt"
 
 	minKey, maxKey, err := startupParameters(filePath)

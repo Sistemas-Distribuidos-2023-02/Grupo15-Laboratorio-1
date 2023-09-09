@@ -4,7 +4,7 @@ import "google/protobuf/empty.proto";
 
 package betakeys;
 
-option go_package = ""
+option go_package = "./betakeys";
 
 message KeyNotification {
     string keygenNumber = 1;
