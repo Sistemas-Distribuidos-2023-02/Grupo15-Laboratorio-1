@@ -4,7 +4,7 @@ package central;
 option go_package = "github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/tree/main/central/proto";
 
 message Message {
-    string keyAmount = 1;
+    string body = 1;
 }
 
 service Central {
