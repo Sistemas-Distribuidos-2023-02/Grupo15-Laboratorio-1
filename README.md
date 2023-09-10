@@ -1,7 +1,7 @@
 # Grupo15-Laboratorio-1
 
 # Integrantes
-* Dante Aspee - Rol 
+* Dante Aspee - Rol 202073524-7
 * Vicente Gaete - Rol 202004604-2
 * Bernardo Pinninghoff - Rol 201973543-8
 
