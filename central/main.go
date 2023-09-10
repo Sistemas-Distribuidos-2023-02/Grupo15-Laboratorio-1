@@ -201,7 +201,7 @@ func main() {
 		
 	} ()
 	
-	// Asynchronous message sending, waiting for shutdown signal
+	// Waiting for shutdown signal
 	<- RabbitShutdownChannel
 
 	// Graceful shutdown
