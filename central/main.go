@@ -2,19 +2,24 @@ package main
 
 import (
 	"context"
-	"net"
 	"fmt"
 	"io/ioutil"
-	"strings"
-	"strconv"
 	"math/rand"
+	"net"
+	"strconv"
+	"strings"
 	"time"
+	"os"
+	"os/signal"
+	"syscall"
+	"sync"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
+	"github.com/streadway/amqp"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"github.com/streadway/amqp"
 )
 
 type server struct {}
@@ -146,22 +151,61 @@ func main() {
 		return
 	}
 
-	// Receive keys in queue from regional servers 
-	msgs, err := rabbitChannel.Consume(
-		queueName,
-		"",		// consumer
-		true,	// auto-ack
-		false,	// exclusive
-		false,	// no-local
-		false,	// no-wait
-		nil,	// arguments
-	)
-	if err != nil {
-		fmt.Printf("Failed to register a regional server user: %v\n", err)
-		return
-	}
+	RabbitShutdownChannel := make(chan os.Signal, 1)
+	signal.Notify(RabbitShutdownChannel, syscall.SIGINT, syscall.SIGTERM)
+	var wg sync.WaitGroup
 
-	for msg := range msgs {
-		fmt.Printf("Mensaje asincrono de servidor regional recibido %s\n", msg.Body)
-	}
+	// Asynchronous message reception
+	wg.Add(1)
+	go func ()  {
+		// Consuming message
+		msgs, err := rabbitChannel.Consume(
+			queueName,
+			"",		// consumer
+			true,	// auto-ack
+			false,	// exclusive
+			false,	// no-local
+			false,	// no-wait
+			nil,	// arguments
+		)
+		if err != nil {
+			fmt.Printf("Failed to register a regional server user: %v\n", err)
+			return
+		}
+
+		for {
+			select{
+				case <- RabbitShutdownChannel:
+					fmt.Printf("RabbitMQ server shutting down gracefully...\n")
+					wg.Done()
+					return
+				case msg := <- msgs:
+					// Unmarshalling message
+					var reply betakeys.RegionalKeyReply
+
+					err := proto.Unmarshal(msg.Body, &reply)
+					if err != nil {
+						fmt.Printf("Failed to unmarshal message: %v\n", err)
+						return
+					}
+			
+					serverName := reply.ServerName
+					content := reply.Content
+			
+					fmt.Printf("Mensaje asincrono de servidor %v leido: %v\n", serverName, content)
+					msg.Ack(false)
+					wg.Done()
+			}
+
+		}
+		
+	} ()
+	
+	// Asynchronous message sending, waiting for shutdown signal
+	<- RabbitShutdownChannel
+
+	// Graceful shutdown
+	wg.Wait()
+	rabbitChannel.Close()
+	
 }
