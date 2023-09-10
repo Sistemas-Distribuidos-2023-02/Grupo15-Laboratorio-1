@@ -92,4 +92,23 @@ func main() {
 
 	keys := keygen(minKey, maxKey)
 	fmt.Printf("Keys: %v\n", keys)
+
+	// Send notification to regional servers
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		fmt.Printf("Failed to connect to gRPC server: %v\n", err)
+		return
+	}
+	defer conn.Close()
+
+	client := betakeys.NewBetakeysServiceClient(conn)
+	notification := &betakeys.KeyNotification{
+		KeygenNumber: string(len(keys)),
+	}
+
+	_, err = client.NotifyRegionalServers(context.Background(), notification)
+	if err != nil {
+		fmt.Printf("Failed to send notification: %v\n", err)
+		return
+	}
 }
