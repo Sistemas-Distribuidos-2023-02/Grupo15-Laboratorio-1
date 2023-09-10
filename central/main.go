@@ -20,7 +20,7 @@ type server struct {}
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 	keygenNumber := request.KeygenNumber
-	fmt.Printf("Received notification: %d keys generated\n", keygenNumber)
+	fmt.Printf("Received notification: %v keys generated\n", keygenNumber)
 	return &emptypb.Empty{}, nil
 }
 
@@ -64,7 +64,7 @@ func main() {
 	// Create and set up gRPC server
 	grpcServer := grpc.NewServer()
 
-	betakeys.RegisterBetaKeysServer(grpcServer, &server{})
+	betakeys.RegisterBetakeysServiceServer(grpcServer, &server{})
 
 	reflection.Register(grpcServer)
 
