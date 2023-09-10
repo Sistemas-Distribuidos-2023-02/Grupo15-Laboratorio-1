@@ -10,6 +10,11 @@ message KeyNotification {
     string keygenNumber = 1;
 }
 
+message RegionalKeyReply {
+    string serverName = 1;
+    string content = 2;
+}
+
 service BetakeysService {
     rpc NotifyRegionalServers(KeyNotification) returns (google.protobuf.Empty);
 }
