@@ -103,7 +103,7 @@ func main() {
 
 	client := betakeys.NewBetakeysServiceClient(conn)
 	notification := &betakeys.KeyNotification{
-		KeygenNumber: string(len(keys)),
+		KeygenNumber: string(rune(len(keys))),
 	}
 
 	_, err = client.NotifyRegionalServers(context.Background(), notification)
