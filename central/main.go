@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -18,6 +19,11 @@ import (
 )
 
 type server struct {}
+
+type regionalMessage struct {
+	serverName string `json:"serverName"`
+	content string `json:"content"`
+}
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 	keygenNumber := request.KeygenNumber
@@ -93,6 +99,64 @@ func setupRabbitMQ()(*amqp.Channel, error){
 	return rabbitChannel, nil
 }
 
+func messageProcessing(numUsers int, numKeys *int) (numRegistered, numIgnored int) {
+	if numUsers > *numKeys {
+		numIgnored = numUsers - *numKeys
+		numUsers = *numKeys
+	}
+
+	*numKeys -= numUsers
+	if *numKeys < 0 {
+		*numKeys = 0
+	}
+	numRegistered = numUsers
+
+	return numRegistered, numIgnored
+}
+
+func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int){
+	// Consumer
+	msgs, err := rabbitChannel.Consume(
+		queueName,
+		"",		// consumer
+		false,	// auto-ack
+		false,	// exclusive
+		false,	// no-local
+		false,	// no-wait
+		nil,	// arguments
+	)
+	if err != nil {
+		fmt.Printf("failed to register a RabbitMQ consumer: %v", err)
+		return
+	}
+
+	// Message handling loop
+	for msg := range msgs {
+		var message regionalMessage
+		if err := json.Unmarshal(msg.Body, &message); err != nil {
+			fmt.Printf("failed to unmarshal message: %v\n", err)
+			msg.Ack(false)
+			continue
+		}
+
+		regionalServerName := strings.TrimSpace(message.serverName)
+		numUsers, err := strconv.Atoi(strings.TrimSpace(message.content))
+		if err != nil {
+			fmt.Printf("invalid message format from regional servers: %v\n", err)
+			return
+		}
+
+		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
+
+		// Process message
+		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
+
+		// Acknowledge message
+		msg.Ack(false)
+
+	}
+}
+
 func main() {
 	// Create and set up gRPC server
 	grpcServer := grpc.NewServer()
@@ -124,7 +188,7 @@ func main() {
 	}
 
 	keys := keygen(minKey, maxKey)
-	fmt.Printf("Keys: %v\n", keys)
+	nKeys := len(keys)
 
 	// Send notification to regional servers
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
@@ -146,11 +210,14 @@ func main() {
 	}
 
 	// Set up RabbitMQ
-	rabbitChannel, err := setupRabbitMQ()
+	rabbitChannel, err := setupRabbitMQ() // queueName = "keyVolunteers"
 	if err != nil {
 		fmt.Printf("Failed to set up RabbitMQ: %v\n", err)
 		return
 	}
 	defer rabbitChannel.Close()
+
+	// Start RabbitMQ message handler
+	go rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &nKeys)
 	
 }
