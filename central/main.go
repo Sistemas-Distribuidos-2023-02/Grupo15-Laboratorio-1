@@ -31,6 +31,14 @@ func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.Ke
 	return &emptypb.Empty{}, nil
 }
 
+func (s *server)SendResponseToRegionalServer(ctx context.Context, request *betakeys.ResponseToRegionalServer) (*emptypb.Empty, error) {
+	accepted := request.Accepted
+	denied := request.Denied
+	targetServerName := request.TargetServerName
+	fmt.Printf("Se inscribieron cupos en el servidor %v: %v inscritos, %v denegados\n", targetServerName, accepted, denied)
+	return &emptypb.Empty{}, nil
+}
+
 func startupParameters(filePath string) (minKey, maxKey, ite int, err error) {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -113,6 +121,29 @@ func messageProcessing(numUsers int, numKeys *int) (numRegistered, numIgnored in
 	return numRegistered, numIgnored
 }
 
+func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored int32) error {
+	// Connect to gRPC server
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to connect to gRPC server while sending results: %v", err)
+	}
+	defer conn.Close()
+
+	client := betakeys.NewBetakeysServiceClient(conn)
+	response := &betakeys.ResponseToRegionalServer{
+		TargetServerName: serverName,
+		Accepted: numRegistered,
+		Denied: numIgnored,
+	}
+
+	_, err = client.SendResponseToRegionalServer(context.Background(), response)
+	if err != nil {
+		return fmt.Errorf("failed to send response to regional server while sending results: %v", err)
+	}
+
+	return nil
+}
+
 func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int){
 	// Consumer
 	msgs, err := rabbitChannel.Consume(
@@ -149,6 +180,13 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
+
+		// Send results to regional server
+		err = sendResultsToRegionalServer(regionalServerName, int32(numRegistered), int32(numIgnored))
+		if err != nil {
+			fmt.Printf("failed to send results to regional server %v: %v\n", regionalServerName, err)
+			return
+		}
 
 		// Acknowledge message
 		msg.Ack(false)

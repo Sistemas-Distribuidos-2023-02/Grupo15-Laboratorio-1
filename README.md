@@ -27,9 +27,9 @@ Máquina - Contraseña
 * ~~Generar cantidad de llaves al azar en intervalo segun txt, registrar hora~~ Listo
 * ~~Notificar con comunicacion **sincrona/gRPC** a los S.Regionales el # de llaves~~ Basicamente listo pero falta probarlo con los servidores regionales para saber si funciona/falta algo
 * ~~Recibir solicitudes de llaves de S.Regionales con comunicacion **asincrona/RabbitMQ**~~ Idem que punto anterior
-* Registrar S.Regional y # de llaves entregadas y procesar cantidad de llaves de S.Central -> En progreso
+* ~~Registrar S.Regional y # de llaves entregadas y procesar cantidad de llaves de S.Central~~ Listo
 * Escribir en archivo 
-* Enviar respuesta de forma **sincrona/gRPC** a S.Regionales
+* ~~Enviar respuesta de forma **sincrona/gRPC** a S.Regionales~~ Listo pero sin testear
 * Repetir segun iteraciones indicadas en archivo txt
 
 ### S. Regional
