@@ -30,7 +30,7 @@ func (s *server)SendResponseToRegionalServer(ctx context.Context, request *betak
 	return &emptypb.Empty{}, nil
 }
 
-func setupRabbitMQ()(*amqp.Channel, error){
+func SetupRabbitMQ()(*amqp.Channel, error){
 	//RabbitMQ server connection
 	const rabbitmqURL = "amqp://guest:guest@localhost:25672/"
 
@@ -100,7 +100,7 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 	return nil
 }
 
-func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int){
+func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int){
 	// Consumer
 	msgs, err := rabbitChannel.Consume(
 		queueName,
