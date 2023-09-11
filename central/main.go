@@ -18,11 +18,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type server struct {}
+type server struct {
+	betakeys.UnimplementedBetakeysServiceServer
+}
 
 type regionalMessage struct {
-	serverName string `json:"serverName"`
-	content string `json:"content"`
+	ServerName string `json:"serverName"`
+	Content string `json:"content"`
 }
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
@@ -169,8 +171,8 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			continue
 		}
 
-		regionalServerName := strings.TrimSpace(message.serverName)
-		numUsers, err := strconv.Atoi(strings.TrimSpace(message.content))
+		regionalServerName := strings.TrimSpace(message.ServerName)
+		numUsers, err := strconv.Atoi(strings.TrimSpace(message.Content))
 		if err != nil {
 			fmt.Printf("invalid message format from regional servers: %v\n", err)
 			return
@@ -217,10 +219,10 @@ func main() {
 		}
 	}()
 
-	// Generate keys
+	// Generate keys and read start up parameters
 	filePath := "./parametros_de_inicio.txt"
 
-	minKey, maxKey, ite, err := startupParameters(filePath)
+	minKey, maxKey, ite, err := startupParameters(filePath) // the "ite" variable is not used yet in this version of the code, it will be used in later implementation
 	if err != nil {
 		fmt.Printf("Error reading startup_parameters: %v\n", err)
 		return
@@ -256,6 +258,8 @@ func main() {
 	defer rabbitChannel.Close()
 
 	// Start RabbitMQ message handler
+	// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
+	// The message handler will then process the messages and send the results to the regional servers
 	go rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys)
 	
 }
