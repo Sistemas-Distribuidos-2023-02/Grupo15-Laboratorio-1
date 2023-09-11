@@ -7,9 +7,11 @@ require (
 	github.com/streadway/amqp v1.1.0
 	google.golang.org/grpc v1.58.0
 	google.golang.org/protobuf v1.31.0
+	/home/univm/Desktop/SisDistro/Grupo15-Laboratorio-1/central/rabbitmq/rabbitmq v0.0.0
 )
 
 require (
+	github.com/rabbitmq/amqp091-go v1.8.1
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
