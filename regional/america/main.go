@@ -142,7 +142,7 @@ func main() {
 	cantidadUsuarios := CantidadUsuarios(parametroInicio)
 	fmt.Printf("Cantidad de usuarios es %d\n", cantidadUsuarios)
 
-	// Receive notification from central server	
+	// Receive notification from central server	aa
 	grpcServer := grpc.NewServer()
 
 	serverState := &ServerState{}
