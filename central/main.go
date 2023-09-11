@@ -189,7 +189,6 @@ func main() {
 	}
 
 	keys := keygen(minKey, maxKey)
-	nKeys := len(keys)
 
 	// Send notification to regional servers
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
@@ -219,6 +218,6 @@ func main() {
 	defer rabbitChannel.Close()
 
 	// Start RabbitMQ message handler
-	go rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &nKeys)
+	go rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys)
 	
 }
