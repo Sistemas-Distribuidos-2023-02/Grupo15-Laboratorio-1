@@ -31,40 +31,39 @@ func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.Ke
 	return &emptypb.Empty{}, nil
 }
 
-func startupParameters(filePath string) (minKey, maxKey int, err error) {
+func startupParameters(filePath string) (minKey, maxKey, ite int, err error) {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
-	cotas := strings.Split(string(content), "-")
-	if len(cotas) != 2 {
-		return 0, 0, fmt.Errorf("invalid file format in parametros_de_inicio.txt")
-	}
+	lines := strings.Split(string(content), "\n")
 
-	minKey, err = strconv.Atoi(strings.TrimSpace(cotas[0]))
+	firstLine := strings.TrimSpace(lines[0])
+
+	cotas := strings.Split(firstLine, "-")
+
+	minKey, err = strconv.Atoi(cotas[0])
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
-	maxKey, err = strconv.Atoi(strings.TrimSpace(cotas[1]))
+	maxKey, err = strconv.Atoi(cotas[1])
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
-	return minKey, maxKey, nil
+	ite, err = strconv.Atoi(strings.TrimSpace(lines[1]))
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return minKey, maxKey, ite, nil
 }
 
-func keygen(minKey, maxKey int) []int {
+func keygen(minKey, maxKey int) int {
 	rand.Seed(time.Now().UnixNano())
-
-	n := rand.Intn(maxKey - minKey + 1) + minKey
-
-	keys := make([]int, n)
-	for i := 0; i < n; i++ {
-		keys[i] = minKey + rand.Intn(n)
-	}
-	return keys
+	return rand.Intn(maxKey - minKey + 1) + minKey
 }
 
 func setupRabbitMQ()(*amqp.Channel, error){
@@ -173,15 +172,17 @@ func main() {
 
 	// Start gRPC server
 	fmt.Println("Starting gRPC server on port: 50051")
-	if err := grpcServer.Serve(listener); err != nil {
-		fmt.Printf("Failed to serve: %v\n", err)
-		return
-	}
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			fmt.Printf("Failed to serve: %v\n", err)
+			return
+		}
+	}()
 
 	// Generate keys
 	filePath := "./parametros_de_inicio.txt"
 
-	minKey, maxKey, err := startupParameters(filePath)
+	minKey, maxKey, ite, err := startupParameters(filePath)
 	if err != nil {
 		fmt.Printf("Error reading startup_parameters: %v\n", err)
 		return
@@ -200,7 +201,7 @@ func main() {
 
 	client := betakeys.NewBetakeysServiceClient(conn)
 	notification := &betakeys.KeyNotification{
-		KeygenNumber: string(rune(len(keys))),
+		KeygenNumber: strconv.Itoa(keys),
 	}
 
 	_, err = client.NotifyRegionalServers(context.Background(), notification)

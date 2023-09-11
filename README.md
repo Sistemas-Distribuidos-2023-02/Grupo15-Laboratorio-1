@@ -1,7 +1,7 @@
 # Grupo15-Laboratorio-1
 
 # Integrantes
-* Dante Aspee - Rol 
+* Dante Aspee - Rol 202073524-7
 * Vicente Gaete - Rol 202004604-2
 * Bernardo Pinninghoff - Rol 201973543-8
 
@@ -23,11 +23,11 @@ Máquina - Contraseña
 
 ### S. Central
 
-* Leer parametros_de_inicio.txt
-* Generar cantidad de llaves al azar en intervalo segun txt, registrar hora
-* Notificar con comunicacion **sincrona/gRPC** a los S.Regionales el # de llaves
-* Recibir solicitudes de llaves de S.Regionales con comunicacion **asincrona/RabbitMQ**
-* Registrar S.Regional y # de llaves entregadas y procesar cantidad de llaves de S.Central
+* ~~Leer parametros_de_inicio.txt~~ Listo
+* ~~Generar cantidad de llaves al azar en intervalo segun txt, registrar hora~~ Listo
+* ~~Notificar con comunicacion **sincrona/gRPC** a los S.Regionales el # de llaves~~ Basicamente listo pero falta probarlo con los servidores regionales para saber si funciona/falta algo
+* ~~Recibir solicitudes de llaves de S.Regionales con comunicacion **asincrona/RabbitMQ**~~ Idem que punto anterior
+* Registrar S.Regional y # de llaves entregadas y procesar cantidad de llaves de S.Central -> En progreso
 * Escribir en archivo 
 * Enviar respuesta de forma **sincrona/gRPC** a S.Regionales
 * Repetir segun iteraciones indicadas en archivo txt
@@ -41,9 +41,6 @@ Máquina - Contraseña
 * Recibir respuesta de llaves registrados por S.Central y restarlo para proxima solicitud
 * Continuar segun iteraciones indicadas por S.Central
 
-### Cola Rabbit
-
-* 
 
 ## Distribución VMs y Containers
 
