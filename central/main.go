@@ -229,7 +229,16 @@ func main() {
 	}
 
 	// Begin iterations
+	var count int = 0
 	for ite != 0 {
+		count++
+		if ite == -1{
+			fmt.Printf("Generacion %v/%v\n", count, "infinito")
+		}
+		if ite > 0 {
+			fmt.Printf("Generacion %v/%v\n", count, ite)
+		}
+
 		keys := keygen(minKey, maxKey)
 
 		// Send notification to regional servers
