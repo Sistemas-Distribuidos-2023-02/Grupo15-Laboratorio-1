@@ -41,9 +41,6 @@ Máquina - Contraseña
 * Recibir respuesta de llaves registrados por S.Central y restarlo para proxima solicitud
 * Continuar segun iteraciones indicadas por S.Central
 
-### Cola Rabbit
-
-* 
 
 ## Distribución VMs y Containers
 
