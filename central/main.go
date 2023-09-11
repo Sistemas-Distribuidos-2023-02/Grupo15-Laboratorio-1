@@ -18,11 +18,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type server struct {}
+type server struct {
+	betakeys.UnimplementedBetakeysServiceServer
+}
 
 type regionalMessage struct {
-	serverName string `json:"serverName"`
-	content string `json:"content"`
+	ServerName	string	`json:"servername"`
+	Content	string	`json:"content"`
 }
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
@@ -169,8 +171,8 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			continue
 		}
 
-		regionalServerName := strings.TrimSpace(message.serverName)
-		numUsers, err := strconv.Atoi(strings.TrimSpace(message.content))
+		regionalServerName := strings.TrimSpace(message.ServerName)
+		numUsers, err := strconv.Atoi(strings.TrimSpace(message.Content))
 		if err != nil {
 			fmt.Printf("invalid message format from regional servers: %v\n", err)
 			return
@@ -202,14 +204,14 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		fmt.Printf("Failed to listen: %v\n", err)
 		return
 	}
 
 	// Start gRPC server
-	fmt.Println("Starting gRPC server on port: 50051")
+	fmt.Println("Starting gRPC server on port: 50052")
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
 			fmt.Printf("Failed to serve: %v\n", err)
@@ -218,15 +220,18 @@ func main() {
 	}()
 
 	// Generate keys
-	filePath := "./parametros_de_inicio.txt"
+	filePath := "central/parametros_de_inicio.txt"
 
 	minKey, maxKey, ite, err := startupParameters(filePath)
 	if err != nil {
 		fmt.Printf("Error reading startup_parameters: %v\n", err)
 		return
 	}
-
+	fmt.Printf("ite es %d \n", ite)
 	keys := keygen(minKey, maxKey)
+
+	fmt.Printf("KeygenNumber: %d \n", keys)
+
 
 	// Send notification to regional servers
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
