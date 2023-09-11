@@ -228,38 +228,45 @@ func main() {
 		return
 	}
 
-	keys := keygen(minKey, maxKey)
+	// Begin iterations
+	for ite != 0 {
+		keys := keygen(minKey, maxKey)
 
-	// Send notification to regional servers
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
-	if err != nil {
-		fmt.Printf("Failed to connect to gRPC server: %v\n", err)
-		return
+		// Send notification to regional servers
+		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+		if err != nil {
+			fmt.Printf("Failed to connect to gRPC server: %v\n", err)
+			return
+		}
+		defer conn.Close()
+
+		client := betakeys.NewBetakeysServiceClient(conn)
+		notification := &betakeys.KeyNotification{
+			KeygenNumber: strconv.Itoa(keys),
+		}
+
+		_, err = client.NotifyRegionalServers(context.Background(), notification)
+		if err != nil {
+			fmt.Printf("Failed to send notification: %v\n", err)
+			return
+		}
+
+		// Set up RabbitMQ
+		rabbitChannel, err := setupRabbitMQ() // queueName = "keyVolunteers"
+		if err != nil {
+			fmt.Printf("Failed to set up RabbitMQ: %v\n", err)
+			return
+		}
+		defer rabbitChannel.Close()
+
+		// Start RabbitMQ message handler
+		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
+		// The message handler will then process the messages and send the results to the regional servers
+		go rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys)
+
+		if ite > 0 {
+			ite--
+		}
 	}
-	defer conn.Close()
-
-	client := betakeys.NewBetakeysServiceClient(conn)
-	notification := &betakeys.KeyNotification{
-		KeygenNumber: strconv.Itoa(keys),
-	}
-
-	_, err = client.NotifyRegionalServers(context.Background(), notification)
-	if err != nil {
-		fmt.Printf("Failed to send notification: %v\n", err)
-		return
-	}
-
-	// Set up RabbitMQ
-	rabbitChannel, err := setupRabbitMQ() // queueName = "keyVolunteers"
-	if err != nil {
-		fmt.Printf("Failed to set up RabbitMQ: %v\n", err)
-		return
-	}
-	defer rabbitChannel.Close()
-
-	// Start RabbitMQ message handler
-	// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
-	// The message handler will then process the messages and send the results to the regional servers
-	go rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys)
 	
 }

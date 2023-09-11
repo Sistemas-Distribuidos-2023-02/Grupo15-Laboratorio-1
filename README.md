@@ -30,7 +30,7 @@ Máquina - Contraseña
 * ~~Registrar S.Regional y # de llaves entregadas y procesar cantidad de llaves de S.Central~~ Listo
 * Escribir en archivo 
 * ~~Enviar respuesta de forma **sincrona/gRPC** a S.Regionales~~ Listo pero sin testear
-* Repetir segun iteraciones indicadas en archivo txt
+* Repetir segun iteraciones indicadas en archivo txt -> En progreso
 
 ### S. Regional
 
