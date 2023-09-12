@@ -21,11 +21,6 @@ type server struct {
 	betakeys.UnimplementedBetakeysServiceServer
 }
 
-type regionalMessage struct {
-	ServerName	string	`json:"servername"`
-	Content	string	`json:"content"`
-}
-
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 	keygenNumber := request.KeygenNumber
 	fmt.Printf("Received notification: %v keys generated\n", keygenNumber)
