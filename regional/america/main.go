@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net"
 	"strconv"
+
 	// "strings"
 	"time"
 	// "os"
@@ -17,15 +19,31 @@ import (
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
-	// "google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/reflection"
+	//"google.golang.org/protobuf/types/known/emptypb"
 	//"google.golang.org/protobuf/types/known/emptypb"
 	//"google.golang.org/protobuf"
 )
 
-type server struct{}
+type KeygenNotificationServer struct{}
+
+func (s *KeygenNotificationServer) EnviarNotificacion(ctx context.Context, req *betakeys.KeyNotification) (*betakeys.KeygenResponse, error) {
+	keygenNumber := req.KeygenNumber
+
+	// Aquí puedes procesar la notificación de keygen y tomar las acciones necesarias
+	log.Printf("Notificación de Keygen recibida: KeygenNumber=%s\n", keygenNumber)
+
+	// Enviar una respuesta de confirmación
+	respuesta := &betakeys.KeygenResponse{
+		Exito:   true,
+		Mensaje: "Notificación de Keygen recibida exitosamente",
+	}
+
+	return respuesta, nil
+}
 
 func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
-    contenido, err := ioutil.ReadFile(nombreArchivo)
+	contenido, err := ioutil.ReadFile(nombreArchivo)
 	if err != nil {
 		return 0, err
 	}
@@ -33,7 +51,7 @@ func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
 	if err != nil {
 		return 0, err
 	}
-    return parametroInicio, nil
+	return parametroInicio, nil
 }
 
 func generarValorAleatorio(min, max int) int {
@@ -42,7 +60,7 @@ func generarValorAleatorio(min, max int) int {
 }
 
 func CantidadUsuarios(parametrosInicio int) int {
-	aux := float64(parametrosInicio)/2
+	aux := float64(parametrosInicio) / 2
 	min := int(aux - 0.2*aux)
 	max := int(aux + 0.2*aux)
 	return generarValorAleatorio(min, max)
@@ -121,9 +139,7 @@ func main() {
 
 	cantidadUsuarios := CantidadUsuarios(parametroInicio)
 
-
 	fmt.Printf("Cantidad de usuarios es %d\n", cantidadUsuarios)
-
 
 	// Create and set up gRPC server
 	grpcServer := grpc.NewServer()
@@ -147,7 +163,6 @@ func main() {
 		}
 	}()
 
-
 	// // clientesss
 	// conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 
@@ -161,20 +176,17 @@ func main() {
 	// client := betakeys.NewBetakeysServiceClient(conn)
 
 	// // Crea una instancia del mensaje KeyNotification
-    // notificacion := &betakeys.KeyNotification{
-    //     KeygenNumber: "12345", // Establece el valor del campo
-    // }
-	
+	// notificacion := &betakeys.KeyNotification{
+	//     KeygenNumber: "12345", // Establece el valor del campo
+	// }
+
 	// // Llama al método remoto NotifyRegionalServers de manera síncrona
-    // respuesta, err := client.NotifyRegionalServers(context.Background(), notificacion)
-    // if err != nil {
-    //     fmt.Printf("Error al llamar al metodo: %v\n", err)
-    // }
+	// respuesta, err := client.NotifyRegionalServers(context.Background(), notificacion)
+	// if err != nil {
+	//     fmt.Printf("Error al llamar al metodo: %v\n", err)
+	// }
 
-    // fmt.Printf("Respuesta del servidor: %v\n", respuesta)
-
-
-
+	// fmt.Printf("Respuesta del servidor: %v\n", respuesta)
 
 	// // Create and set up gRPC server
 	// grpcServer := grpc.NewServer()
@@ -196,8 +208,6 @@ func main() {
 	// 		log.Fatalf("Error al servir: %v", err)
 	// 	}
 	// }()
-
-
 
 	// Start gRPC server
 	// fmt.Println("Starting gRPC server on port: 50051")
