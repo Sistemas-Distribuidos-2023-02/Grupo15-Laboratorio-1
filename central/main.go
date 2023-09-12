@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -132,7 +133,7 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 	return nil
 }
 
-func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int){
+func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int, logFile *os.File){
 	// Consumer
 	msgs, err := rabbitChannel.Consume(
 		queueName,
@@ -168,6 +169,8 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
+		currentTime := time.Now()
+		log.Printf("%v: Se han registrado %v usuarios, %v solicitados, %v denegados.\n", currentTime, numRegistered, numUsers, numIgnored)
 
 		// Send results to regional server
 		err = sendResultsToRegionalServer(regionalServerName, int32(numRegistered), int32(numIgnored))
@@ -237,6 +240,13 @@ func main() {
         log.Fatalf("Failed to declare RabbitMQ queue: %v", err)
     }
 
+	// Prepare logging file
+	logFile, err := os.OpenFile("central.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("Failed to open log file: %v\n", err)
+		return
+	}
+	log.SetOutput(logFile)
 
 	// Begin iterations
 	var count int = 0
@@ -250,6 +260,8 @@ func main() {
 		}
 
 		keys := keygen(minKey, maxKey)
+		currentTime := time.Now()
+		log.Printf("%v: %v llaves generadas\n", currentTime, keys)
 
 		// Send notification to regional servers
 		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
@@ -271,7 +283,7 @@ func main() {
 		}
 
 		// Message handling
-		rabbitMQMessageHandler(rabbitChannel, queueName, &keys)
+		rabbitMQMessageHandler(rabbitChannel, queueName, &keys, logFile)
 
 		if ite > 0 {
 			ite--
