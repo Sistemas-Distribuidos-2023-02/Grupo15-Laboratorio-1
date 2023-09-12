@@ -34,10 +34,10 @@ Máquina - Contraseña
 
 ### S. Regional
 
-* Recibir notificacion de S.Central de # de llaves disp
-* Leer su propio parametros_de_inicio.txt
-* Generar # de solicitud de llaves al azar en intervalo segun txt
-* Enviar solicitud de llaves con comunicacion **sincrona/gRPC** al S.Central
+* ~~Recibir notificacion de S.Central de # de llaves disp~~  Ready
+* ~~Leer su propio parametros_de_inicio.txt~~ Ready
+* ~~Generar # de solicitud de llaves al azar en intervalo segun txt~~ Ready
+* ~~Enviar solicitud de llaves con comunicacion **asincrona/rabbitMQ** al S.Central~~ Falta testeo
 * Recibir respuesta de llaves registrados por S.Central y restarlo para proxima solicitud
 * Continuar segun iteraciones indicadas por S.Central
 
