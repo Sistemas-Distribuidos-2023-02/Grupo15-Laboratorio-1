@@ -102,6 +102,9 @@ func main() {
 		return
 	}
 
+	// Connect to RabbitMQ server
+	rabbitmqURL := "amqp://guest:guest@localhost:5672/"
+
 	// Begin iterations
 	var count int = 0
 	for ite != 0 {

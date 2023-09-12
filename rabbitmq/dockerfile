@@ -1,1 +1,6 @@
-FROM golang:1.18
+FROM rabbitmq:3.9.13
+
+EXPOSE 5672 15672
+
+CMD ["rabbitmq-server"]
+
