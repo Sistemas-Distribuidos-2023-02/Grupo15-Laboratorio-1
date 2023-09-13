@@ -31,7 +31,7 @@ Máquina - Contraseña
 * ~~Escribir en archivo~~ Listo
 * ~~Enviar respuesta de forma **sincrona/gRPC** a S.Regionales~~ Listo pero sin testear
 * ~~Repetir segun iteraciones indicadas en archivo txt~~ Listo
-* Contenedor Docker
+* ~~Contenedor Docker~~
 * Testing
 
 ### S. Regional
