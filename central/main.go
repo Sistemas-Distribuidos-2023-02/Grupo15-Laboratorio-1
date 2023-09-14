@@ -78,23 +78,6 @@ func keygen(minKey, maxKey int) int {
 	return rand.Intn(maxKey - minKey + 1) + minKey
 }
 
-func connectToRabbitMQ(rabbitmqURL string) (rabbitChannel *amqp.Channel, err error) {
-	conn, err := amqp.Dial(rabbitmqURL)
-    if err != nil {
-        log.Fatalf("Failed to connect to RabbitMQ server: %v", err)
-		return nil, err
-    }
-    defer conn.Close()
-
-    ch, err := conn.Channel()
-    if err != nil {
-        log.Fatalf("Failed to open a RabbitMQ channel: %v", err)
-		return nil, err
-    }
-    defer ch.Close()
-	return ch, nil
-}
-
 func messageProcessing(numUsers int, numKeys *int) (numRegistered, numIgnored int) {
 	if numUsers > *numKeys {
 		numIgnored = numUsers - *numKeys
@@ -169,8 +152,8 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
-		currentTime := time.Now()
-		log.Printf("%v: Se han registrado %v usuarios, %v solicitados, %v denegados.\n", currentTime, numRegistered, numUsers, numIgnored)
+		
+		log.Printf("Se han registrado %v usuarios, %v solicitados, %v denegados.\n", numRegistered, numUsers, numIgnored)
 
 		// Send results to regional server
 		err = sendResultsToRegionalServer(regionalServerName, int32(numRegistered), int32(numIgnored))
@@ -219,11 +202,18 @@ func main() {
 
 	// Connect to RabbitMQ server
 	const rabbitmqURL = "amqp://guest:guest@localhost:5672/"
-	rabbitChannel, err := connectToRabbitMQ(rabbitmqURL)
-	if err != nil {
-		fmt.Printf("Failed to connect to RabbitMQ server: %v\n", err)
-		return
-	}
+	rabbitConn, err := amqp.Dial(rabbitmqURL)
+    if err != nil {
+        log.Fatalf("Failed to connect to RabbitMQ server: %v", err)
+    }
+    defer rabbitConn.Close()
+
+    rabbitChannel, err := rabbitConn.Channel()
+    if err != nil {
+        log.Fatalf("Failed to open a RabbitMQ channel: %v", err)
+    }
+    defer rabbitChannel.Close()
+
 
 	// RabbitMQ queue declaration
 	queueName := "keyVolunteers"
@@ -260,8 +250,8 @@ func main() {
 		}
 
 		keys := keygen(minKey, maxKey)
-		currentTime := time.Now()
-		log.Printf("%v: %v llaves generadas\n", currentTime, keys)
+		
+		log.Printf("%v llaves generadas\n", keys)
 
 		// Send notification to regional servers
 		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
