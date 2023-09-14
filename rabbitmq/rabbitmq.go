@@ -6,6 +6,7 @@ import (
 	"strings"
 	"context"
 	"encoding/json"
+	"log"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/grpc"
@@ -64,15 +65,12 @@ func SetupRabbitMQ()(*amqp.Channel, error){
 
 func messageProcessing(numUsers int, numKeys *int) (numRegistered, numIgnored int) {
 	if numUsers > *numKeys {
+		numRegistered = *numKeys
 		numIgnored = numUsers - *numKeys
-		numUsers = *numKeys
+	} else {
+		numRegistered = numUsers
+		numIgnored = 0
 	}
-
-	*numKeys -= numUsers
-	if *numKeys < 0 {
-		*numKeys = 0
-	}
-	numRegistered = numUsers
 
 	return numRegistered, numIgnored
 }
@@ -81,9 +79,8 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 	// Connect to gRPC server
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server while sending results: %v", err)
+		log.Fatalf("Fallo en conectar gRPC server: %v", err)
 	}
-	defer conn.Close()
 
 	client := betakeys.NewBetakeysServiceClient(conn)
 	response := &betakeys.ResponseToRegionalServer{
@@ -132,7 +129,7 @@ func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			return
 		}
 
-		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
+		fmt.Printf("Mensaje asincrono de servidor %v recibido. Numero de usuarios recibido: %v", regionalServerName, numUsers)
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)

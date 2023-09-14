@@ -1,10 +1,10 @@
-FROM golang:1.21.1
+FROM golang:1.18
 
 WORKDIR /app
 
-COPY go.mod .
-COPY central/main.go .
+COPY ./main.go .
 
 RUN go build -o bin .
+
 
 ENTRYPOINT [ "/app/bin" ]
