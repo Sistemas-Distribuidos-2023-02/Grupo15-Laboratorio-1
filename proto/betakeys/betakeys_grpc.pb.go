@@ -19,10 +19,92 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-const (
-	BetakeysService_NotifyRegionalServers_FullMethodName        = "/betakeys.BetakeysService/NotifyRegionalServers"
-	BetakeysService_SendResponseToRegionalServer_FullMethodName = "/betakeys.BetakeysService/SendResponseToRegionalServer"
-)
+// KeygenNotificationServiceClient is the client API for KeygenNotificationService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type KeygenNotificationServiceClient interface {
+	EnviarNotificacion(ctx context.Context, in *KeyNotification, opts ...grpc.CallOption) (*KeygenResponse, error)
+}
+
+type keygenNotificationServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewKeygenNotificationServiceClient(cc grpc.ClientConnInterface) KeygenNotificationServiceClient {
+	return &keygenNotificationServiceClient{cc}
+}
+
+func (c *keygenNotificationServiceClient) EnviarNotificacion(ctx context.Context, in *KeyNotification, opts ...grpc.CallOption) (*KeygenResponse, error) {
+	out := new(KeygenResponse)
+	err := c.cc.Invoke(ctx, "/betakeys.KeygenNotificationService/EnviarNotificacion", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// KeygenNotificationServiceServer is the server API for KeygenNotificationService service.
+// All implementations must embed UnimplementedKeygenNotificationServiceServer
+// for forward compatibility
+type KeygenNotificationServiceServer interface {
+	EnviarNotificacion(context.Context, *KeyNotification) (*KeygenResponse, error)
+	mustEmbedUnimplementedKeygenNotificationServiceServer()
+}
+
+// UnimplementedKeygenNotificationServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedKeygenNotificationServiceServer struct {
+}
+
+func (UnimplementedKeygenNotificationServiceServer) EnviarNotificacion(context.Context, *KeyNotification) (*KeygenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnviarNotificacion not implemented")
+}
+func (UnimplementedKeygenNotificationServiceServer) mustEmbedUnimplementedKeygenNotificationServiceServer() {
+}
+
+// UnsafeKeygenNotificationServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to KeygenNotificationServiceServer will
+// result in compilation errors.
+type UnsafeKeygenNotificationServiceServer interface {
+	mustEmbedUnimplementedKeygenNotificationServiceServer()
+}
+
+func RegisterKeygenNotificationServiceServer(s grpc.ServiceRegistrar, srv KeygenNotificationServiceServer) {
+	s.RegisterService(&KeygenNotificationService_ServiceDesc, srv)
+}
+
+func _KeygenNotificationService_EnviarNotificacion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KeyNotification)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeygenNotificationServiceServer).EnviarNotificacion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/betakeys.KeygenNotificationService/EnviarNotificacion",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeygenNotificationServiceServer).EnviarNotificacion(ctx, req.(*KeyNotification))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// KeygenNotificationService_ServiceDesc is the grpc.ServiceDesc for KeygenNotificationService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var KeygenNotificationService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "betakeys.KeygenNotificationService",
+	HandlerType: (*KeygenNotificationServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "EnviarNotificacion",
+			Handler:    _KeygenNotificationService_EnviarNotificacion_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "betakeys.proto",
+}
 
 // BetakeysServiceClient is the client API for BetakeysService service.
 //

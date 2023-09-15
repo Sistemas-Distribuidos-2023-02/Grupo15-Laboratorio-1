@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net"
 	"strconv"
+
 	"time"
-	"log"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	"github.com/streadway/amqp"
@@ -57,10 +58,11 @@ func (s *server) SendResponseToRegionalServer (ctx context.Context, request *bet
 	}
 
 	return &emptypb.Empty{}, nil
+
 }
 
 func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
-    contenido, err := ioutil.ReadFile(nombreArchivo)
+	contenido, err := ioutil.ReadFile(nombreArchivo)
 	if err != nil {
 		return 0, err
 	}
@@ -68,7 +70,7 @@ func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
 	if err != nil {
 		return 0, err
 	}
-    return parametroInicio, nil
+	return parametroInicio, nil
 }
 
 func generarValorAleatorio(min, max int) int {
@@ -77,7 +79,7 @@ func generarValorAleatorio(min, max int) int {
 }
 
 func CantidadUsuarios(parametrosInicio int) int {
-	aux := float64(parametrosInicio)/2
+	aux := float64(parametrosInicio) / 2
 	min := int(aux - 0.2*aux)
 	max := int(aux + 0.2*aux)
 	return generarValorAleatorio(min, max)
@@ -158,6 +160,7 @@ func main() {
 	log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
 
 	// Receive notification from central server	aa
+
 	grpcServer := grpc.NewServer()
 
 	keyServer := &server{
@@ -179,5 +182,6 @@ func main() {
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Error al Serve: %v", err)
 	}
+
 
 }
