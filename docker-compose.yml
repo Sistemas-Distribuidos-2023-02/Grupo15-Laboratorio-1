@@ -1,0 +1,31 @@
+version: '3'
+services:
+  central:
+    build:
+      context: ./central 
+    ports:
+      - "5001:5001"
+
+  asia:
+    build:
+      context: ./regional/asia  
+
+  europa:
+    build:
+      context: ./regional/europa  
+
+  oceania:
+    build:
+      context: ./regional/oceania  
+
+  america:
+    build:
+      context: ./regional/america  
+
+  rabbitmq:
+    build:
+      context: ./rabbitmq  
+    image: rabbitmq:latest
+    ports:
+      - "5673:5673"
+      - "15672:15672"
