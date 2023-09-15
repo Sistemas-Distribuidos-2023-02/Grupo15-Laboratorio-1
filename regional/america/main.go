@@ -2,44 +2,64 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
 	"strconv"
+	//"strings"
 
-	// "strings"
 	"time"
-	// "os"
-	// "bufio"
-
-	"encoding/json"
+	"log"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	//"google.golang.org/protobuf/types/known/emptypb"
-	//"google.golang.org/protobuf/types/known/emptypb"
-	//"google.golang.org/protobuf"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type KeygenNotificationServer struct{}
 
-func (s *KeygenNotificationServer) EnviarNotificacion(ctx context.Context, req *betakeys.KeyNotification) (*betakeys.KeygenResponse, error) {
-	keygenNumber := req.KeygenNumber
+type server struct {
+	keys int
+	serverName string
+	betakeys.UnimplementedBetakeysServiceServer
+}
 
-	// Aquí puedes procesar la notificación de keygen y tomar las acciones necesarias
-	log.Printf("Notificación de Keygen recibida: KeygenNumber=%s\n", keygenNumber)
 
-	// Enviar una respuesta de confirmación
-	respuesta := &betakeys.KeygenResponse{
-		Exito:   true,
-		Mensaje: "Notificación de Keygen recibida exitosamente",
+func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
+
+	keygenNumber := request.KeygenNumber
+	ServerName := s.serverName
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central")
+
+	if err := enviarUsuariosAQueue(keygenNumber, ServerName); err != nil {
+		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
 	}
 
-	return respuesta, nil
+	return &emptypb.Empty{}, nil
+}
+
+func (s *server) SendResponseToRegionalServer (ctx context.Context, request *betakeys.ResponseToRegionalServer) (*emptypb.Empty, error) {
+	
+	accepted := request.Accepted
+	denied := request.Denied
+	targetServerName := request.TargetServerName
+	log.Println("Se inscribieron cupos en el servidor" ,targetServerName, ":" ,accepted, "inscritos," ,denied, "denegados")
+	
+	if denied == 0 {
+		return &emptypb.Empty{}, nil
+	} else {
+		keygenNumber := denied
+		if err := enviarUsuariosAQueue(keygenNumber, targetServerName); err != nil {
+			log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
+		}
+	}
+
+	return &emptypb.Empty{}, nil
+
 }
 
 func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
@@ -130,90 +150,39 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "./parametros_de_inicio.txt"
+	filePath := "regional/america/parametros_de_inicio.txt"
 	parametroInicio, err := obtenerParametroInicio(filePath)
 	if err != nil {
-		fmt.Printf("Error reading startup_parameters: %v\n", err)
-		return
+		log.Fatalf("Error al leer archivo parametros: %v", err)
 	}
 
+	// Generate keys 
 	cantidadUsuarios := CantidadUsuarios(parametroInicio)
+	log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
 
-	fmt.Printf("Cantidad de usuarios es %d\n", cantidadUsuarios)
+	// Receive notification from central server	aa
 
-	// Create and set up gRPC server
 	grpcServer := grpc.NewServer()
 
-	betakeys.RegisterBetakeysServiceServer(grpcServer, &server{})
+	keyServer := &server{
+		keys: cantidadUsuarios,
+		serverName: "america",
+	}
+
+	betakeys.RegisterBetakeysServiceServer(grpcServer, keyServer)
 
 	reflection.Register(grpcServer)
 
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		fmt.Printf("Failed to listen: %v\n", err)
-		return
+		log.Fatalf("Error al escuchar tcp: %v", err)
 	}
 
 	// Start gRPC server
 	fmt.Println("Starting gRPC server on port: 50051")
-	go func() {
-		if err := grpcServer.Serve(listener); err != nil {
-			fmt.Printf("Failed to serve: %v\n", err)
-			return
-		}
-	}()
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Error al Serve: %v", err)
+	}
 
-	// // clientesss
-	// conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
-
-	// if err != nil {
-	// 	fmt.Printf("Error al conectar : %v\n", err)
-	// }
-
-	// defer conn.Close()
-
-	// // crear cliente
-	// client := betakeys.NewBetakeysServiceClient(conn)
-
-	// // Crea una instancia del mensaje KeyNotification
-	// notificacion := &betakeys.KeyNotification{
-	//     KeygenNumber: "12345", // Establece el valor del campo
-	// }
-
-	// // Llama al método remoto NotifyRegionalServers de manera síncrona
-	// respuesta, err := client.NotifyRegionalServers(context.Background(), notificacion)
-	// if err != nil {
-	//     fmt.Printf("Error al llamar al metodo: %v\n", err)
-	// }
-
-	// fmt.Printf("Respuesta del servidor: %v\n", respuesta)
-
-	// // Create and set up gRPC server
-	// grpcServer := grpc.NewServer()
-
-	// betakeys.RegisterBetakeysServiceServer(grpcServer, &server{})
-
-	// reflection.Register(grpcServer)
-
-	// listener, err := net.Listen("tcp", ":50051")
-	// if err != nil {
-	// 	fmt.Printf("Failed to listen: %v\n", err)
-	// 	return
-	// }
-
-	// // Start gRPC server
-	// fmt.Println("Starting gRPC server on port: 50051")
-	// go func() {
-	// 	if err := server.Serve(listener); err != nil {
-	// 		log.Fatalf("Error al servir: %v", err)
-	// 	}
-	// }()
-
-	// Start gRPC server
-	// fmt.Println("Starting gRPC server on port: 50051")
-	// if err := grpcServer.Serve(listener); err != nil {
-	// 	fmt.Printf("Failed to serve: %v\n", err)
-	// 	return
-	// }
 
 }

@@ -7,7 +7,7 @@ package betakeys;
 option go_package = "./betakeys";
 
 message KeyNotification {
-    string keygenNumber = 1;
+    int32 keygenNumber = 1;
 }
 
 message ResponseToRegionalServer {

@@ -2,8 +2,8 @@ FROM golang:1.18
 
 WORKDIR /app
 
-COPY . /app
+COPY ./main.go .
 
-RUN go build -o main .
+RUN go build -o bin .
 
-CMD ["./main"]
+ENTRYPOINT [ "/app/bin" ]
