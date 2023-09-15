@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net"
 	"strconv"
-	//"strings"
 
 	"time"
 
@@ -32,7 +31,8 @@ func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.K
 
 	keygenNumber := request.KeygenNumber
 	ServerName := s.serverName
-	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central")
+	UsersNumber := s.keys
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional")
 
 	if err := enviarUsuariosAQueue(int(keygenNumber), ServerName); err != nil {
 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)

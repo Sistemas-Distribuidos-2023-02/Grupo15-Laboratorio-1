@@ -148,6 +148,7 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			return
 		}
 
+
 		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
 
 		// Process message
@@ -192,14 +193,13 @@ func main() {
 	}()
 
 	// Generate keys and read start up parameters
-	filePath := "./parametros_de_inicio.txt"
+	filePath := "central/parametros_de_inicio.txt"
 
 	minKey, maxKey, ite, err := startupParameters(filePath) // the "ite" variable is not used yet in this version of the code, it will be used in later implementation
 	if err != nil {
 		fmt.Printf("Error reading startup_parameters: %v\n", err)
 		return
 	}
-
 	// Connect to RabbitMQ server
 	const rabbitmqURL = "amqp://guest:guest@localhost:5672/"
 	rabbitConn, err := amqp.Dial(rabbitmqURL)
@@ -237,7 +237,7 @@ func main() {
 		return
 	}
 	log.SetOutput(logFile)
-
+  
 	// Begin iterations
 	var count int = 0
 	for ite != 0 {
@@ -271,7 +271,7 @@ func main() {
 			fmt.Printf("Failed to send notification: %v\n", err)
 			return
 		}
-
+  
 		// Message handling
 		rabbitMQMessageHandler(rabbitChannel, queueName, &keys, logFile)
 
