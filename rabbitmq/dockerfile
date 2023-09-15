@@ -1,5 +1,5 @@
 FROM rabbitmq:3.9.13
 
-EXPOSE 5672 15672
+EXPOSE 5673 15673
 
 CMD ["rabbitmq-server"]

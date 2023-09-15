@@ -201,7 +201,7 @@ func main() {
 		return
 	}
 	// Connect to RabbitMQ server
-	const rabbitmqURL = "amqp://guest:guest@localhost:5672/"
+	const rabbitmqURL = "amqp://guest:guest@localhost:5673/"
 	rabbitConn, err := amqp.Dial(rabbitmqURL)
     if err != nil {
         log.Fatalf("Failed to connect to RabbitMQ server: %v", err)

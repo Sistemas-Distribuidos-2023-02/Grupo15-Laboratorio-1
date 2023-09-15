@@ -89,7 +89,7 @@ type MensajeRegistro struct {
 
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
-	conn, err := amqp.Dial("amqp://usuario:contraseña@localhost:5672/")
+	conn, err := amqp.Dial("amqp://usuario:contraseña@localhost:5673/")
 	if err != nil {
 		return err
 	}
