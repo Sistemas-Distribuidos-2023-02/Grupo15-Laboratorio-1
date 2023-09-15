@@ -2,22 +2,32 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
 	"log"
 	
 	mq "github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/rabbitmq"
+
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type server struct {
 	betakeys.UnimplementedBetakeysServiceServer
+}
+
+type regionalMessage struct {
+	ServerName string `json:"serverName"`
+	Content string `json:"content"`
 }
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
@@ -69,6 +79,96 @@ func keygen(minKey, maxKey int) int {
 	return rand.Intn(maxKey - minKey + 1) + minKey
 }
 
+func messageProcessing(numUsers int, numKeys *int) (numRegistered, numIgnored int) {
+	if numUsers > *numKeys {
+		numIgnored = numUsers - *numKeys
+		numUsers = *numKeys
+	}
+
+	*numKeys -= numUsers
+	if *numKeys < 0 {
+		*numKeys = 0
+	}
+	numRegistered = numUsers
+
+	return numRegistered, numIgnored
+}
+
+func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored int32) error {
+	// Connect to gRPC server
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to connect to gRPC server while sending results: %v", err)
+	}
+	defer conn.Close()
+
+	client := betakeys.NewBetakeysServiceClient(conn)
+	response := &betakeys.ResponseToRegionalServer{
+		TargetServerName: serverName,
+		Accepted: numRegistered,
+		Denied: numIgnored,
+	}
+
+	_, err = client.SendResponseToRegionalServer(context.Background(), response)
+	if err != nil {
+		return fmt.Errorf("failed to send response to regional server while sending results: %v", err)
+	}
+
+	return nil
+}
+
+func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int, logFile *os.File){
+	// Consumer
+	msgs, err := rabbitChannel.Consume(
+		queueName,
+		"",		// consumer
+		false,	// auto-ack
+		false,	// exclusive
+		false,	// no-local
+		false,	// no-wait
+		nil,	// arguments
+	)
+	if err != nil {
+		fmt.Printf("failed to register a RabbitMQ consumer: %v", err)
+		return
+	}
+
+	// Message handling loop
+	for msg := range msgs {
+		var message regionalMessage
+		if err := json.Unmarshal(msg.Body, &message); err != nil {
+			fmt.Printf("failed to unmarshal message: %v\n", err)
+			msg.Ack(false)
+			continue
+		}
+
+		regionalServerName := strings.TrimSpace(message.ServerName)
+		numUsers, err := strconv.Atoi(strings.TrimSpace(message.Content))
+		if err != nil {
+			fmt.Printf("invalid message format from regional servers: %v\n", err)
+			return
+		}
+
+		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
+
+		// Process message
+		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
+		
+		log.Printf("Se han registrado %v usuarios, %v solicitados, %v denegados.\n", numRegistered, numUsers, numIgnored)
+
+		// Send results to regional server
+		err = sendResultsToRegionalServer(regionalServerName, int32(numRegistered), int32(numIgnored))
+		if err != nil {
+			fmt.Printf("failed to send results to regional server %v: %v\n", regionalServerName, err)
+			return
+		}
+
+		// Acknowledge message
+		msg.Ack(false)
+
+	}
+}
+
 func main() {
 	
 	// Generate keys and read start up parameters
@@ -79,7 +179,9 @@ func main() {
 		log.Fatalf("Error al leer archivo parametros: %v", err)
 	}
 
+
 	keys := keygen(minKey, maxKey)
+	
 
 	// Begin iterations
 	var count int = 0
@@ -89,6 +191,8 @@ func main() {
 		} else {
 			log.Println("Generacion" ,count+1, "/" ,ite)
 		}
+
+
 
 		// Send notification to regional servers
 		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
@@ -105,6 +209,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Fallo en enviar notificacion: %v", err)
 		}
+
 
 		// Set up RabbitMQ
 		rabbitChannel, err := mq.SetupRabbitMQ() // queueName = "keyVolunteers"
