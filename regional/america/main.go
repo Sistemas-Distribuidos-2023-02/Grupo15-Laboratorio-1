@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"net"
 	"strconv"
-	//"strings"
 	"time"
 	"log"
 
@@ -31,9 +30,10 @@ func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.K
 
 	keygenNumber := request.KeygenNumber
 	ServerName := s.serverName
-	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central")
+	UsersNumber := s.keys
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional")
 
-	if err := enviarUsuariosAQueue(keygenNumber, ServerName); err != nil {
+	if err := enviarUsuariosAQueue(int(keygenNumber), ServerName); err != nil {
 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
 	}
 
@@ -51,7 +51,7 @@ func (s *server) SendResponseToRegionalServer (ctx context.Context, request *bet
 		return &emptypb.Empty{}, nil
 	} else {
 		keygenNumber := denied
-		if err := enviarUsuariosAQueue(keygenNumber, targetServerName); err != nil {
+		if err := enviarUsuariosAQueue(int(keygenNumber), targetServerName); err != nil {
 			log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
 		}
 	}
