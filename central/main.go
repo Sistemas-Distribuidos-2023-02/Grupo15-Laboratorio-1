@@ -25,8 +25,8 @@ type server struct {
 }
 
 type regionalMessage struct {
-	ServerName string `json:"serverName"`
-	Content string `json:"content"`
+	ServerName string `json:"NombreServidor"`
+	Content string `json:"Usuarios"`
 }
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
