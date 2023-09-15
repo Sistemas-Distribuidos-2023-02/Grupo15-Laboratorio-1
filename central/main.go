@@ -193,7 +193,7 @@ func main() {
 	}()
 
 	// Generate keys and read start up parameters
-	filePath := "central/parametros_de_inicio.txt"
+	filePath := "./parametros_de_inicio.txt"
 
 	minKey, maxKey, ite, err := startupParameters(filePath) // the "ite" variable is not used yet in this version of the code, it will be used in later implementation
 	if err != nil {
