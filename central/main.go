@@ -21,8 +21,8 @@ import (
 )
 
 type regionalMessage struct {
-	ServerName string `json:"NombreServidor"`
-	Content int `json:"Usuarios"`
+	NombreServidor string `json:"nombre_servidor"`
+	Usuarios       int    `json:"usuarios"`
 }
 
 func NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
@@ -120,8 +120,9 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 	return nil
 }
 
-func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int, logFile *os.File){
+func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int, logFile *os.File	){
 	// Consumer
+	fmt.Println("Consuming queue...")	
 	msgs, err := rabbitChannel.Consume(
 		queueName,
 		"",		// consumer
@@ -135,9 +136,17 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 		fmt.Printf("failed to register a RabbitMQ consumer: %v", err)
 		return
 	}
+	fmt.Println("Queue consumed.")
 
 	// Message handling loop
+	fmt.Println("\nWaiting for messages...")
 	for msg := range msgs {
+		fmt.Println("0")
+		if len(msgs) == 0 {
+			fmt.Println("No hay mas mensajes en la cola.")
+			break
+		}
+
 		var message regionalMessage
 		if err := json.Unmarshal(msg.Body, &message); err != nil {
 			fmt.Printf("failed to unmarshal message: %v\n", err)
@@ -145,15 +154,14 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			continue
 		}
 
-		regionalServerName := strings.TrimSpace(message.ServerName)
-		numUsers := message.Content
+		regionalServerName := strings.TrimSpace(message.NombreServidor)
+		numUsers := message.Usuarios
 		if err != nil {
 			fmt.Printf("invalid message format from regional servers: %v\n", err)
 			return
 		}
 
-
-		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
+		fmt.Printf("Mensaje asincrono de servidor %v recibido.\n\n", regionalServerName)
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
@@ -165,12 +173,17 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 		if err != nil {
 			fmt.Printf("failed to send results to regional server %v: %v\n", regionalServerName, err)
 			return
+		} else {
+			fmt.Printf("Resultados enviados a servidor %v.\nUsuarios registrados: %v\nUsuarios rechazados: %v\n\n", regionalServerName, numRegistered, numIgnored)
 		}
 
 		// Acknowledge message
 		msg.Ack(false)
+		fmt.Println("6")
 
+		// Check if queue is done
 	}
+	fmt.Println("Message handling done.")
 }
 
 
@@ -242,10 +255,12 @@ func main() {
 	// Begin iterations
 	var count int = 0
 	for count != ite {
+
 		if ite == -1{
-			log.Println("Generacion",count+1,"/infinito")
-		} else {
-			log.Println("Generacion" ,count+1, "/" ,ite)
+			fmt.Println("Generacion", count+1,"/infinito")
+		}
+		if count < ite-1 {
+			fmt.Println("Generacion", count+1, "/" ,ite)
 		}
 
 		keys := keygen(minKey, maxKey)
@@ -261,15 +276,13 @@ func main() {
 		var wg sync.WaitGroup
 
 		sendKeygenNotification := func(client betakeys.BetakeysServiceClient){
-			defer wg.Done()
-
 			_, err := client.NotifyRegionalServers(context.Background(), notification)
 			if err != nil {
-				fmt.Printf("failed to send keygen notification to regional server: %v\n", err)
 				goResults <- err
 			} else {
 				goResults <- nil
 			}
+			defer wg.Done()
 		}
 
 		wg.Add(4)
@@ -283,7 +296,7 @@ func main() {
 		for result := range goResults {
 			if result != nil {
 				fmt.Printf("failed to send keygen notification to regional server: %v\n", result)
-				return
+				
 			}
 		}
 
@@ -291,8 +304,9 @@ func main() {
 		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
 		// The message handler will then process the messages and send the results to the regional servers
 		rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys, logFile)
+		fmt.Println("Message handler done.")
 
 		count++
+		time.Sleep(time.Second * 3)
 	}
-	
 }
