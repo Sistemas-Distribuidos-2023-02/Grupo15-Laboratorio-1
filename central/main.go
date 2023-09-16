@@ -20,22 +20,18 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type server struct {
-	betakeys.UnimplementedBetakeysServiceServer
-}
-
 type regionalMessage struct {
 	ServerName string `json:"NombreServidor"`
 	Content int `json:"Usuarios"`
 }
 
-func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
+func NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 	keygenNumber := request.KeygenNumber
 	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas")
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server)SendResponseToRegionalServer(ctx context.Context, request *betakeys.ResponseToRegionalServer) (*emptypb.Empty, error) {
+func SendResponseToRegionalServer(ctx context.Context, request *betakeys.ResponseToRegionalServer) (*emptypb.Empty, error) {
 	accepted := request.Accepted
 	denied := request.Denied
 	targetServerName := request.TargetServerName
@@ -294,12 +290,12 @@ func main() {
 
 		// close(goResults)
 
-		// for result := range goResults {
-		// 	if result != nil {
-		// 		fmt.Printf("failed to send keygen notification to regional server: %v\n", result)
-		// 		return
-		// 	}
-		// }
+		for result := range goResults {
+			if result != nil {
+				fmt.Printf("failed to send keygen notification to regional server: %v\n", result)
+				return
+			}
+		}
 
 		// Start RabbitMQ message handler
 		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
