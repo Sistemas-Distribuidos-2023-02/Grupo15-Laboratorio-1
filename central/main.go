@@ -17,7 +17,6 @@ import (
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -93,7 +92,19 @@ func messageProcessing(numUsers int, numKeys *int) (numRegistered, numIgnored in
 
 func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored int32) error {
 	// Connect to gRPC server
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	host := ""
+	switch serverName {
+    case "america":
+        host = "localhost:50051"
+    case "asia":
+        host = "localhost:50052"
+    case "europa":
+        host = "localhost:50053"
+    case "oceania":
+        host = "localhost:50054"
+    }
+
+	conn, err := grpc.Dial(host, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Fallo en conectar gRPC server: %v", err)
 	}
@@ -169,12 +180,6 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 
 
 func main() {
-	// Create and set up gRPC server
-	grpcServer := grpc.NewServer()
-
-	betakeys.RegisterBetakeysServiceServer(grpcServer, &server{})
-
-	reflection.Register(grpcServer)
 
 	// 50051: AMERICA, 50052: ASIA, 50053: EUROPA, 50054: OCEANIA, 
 	serverAddresses := []string{"localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054"}
