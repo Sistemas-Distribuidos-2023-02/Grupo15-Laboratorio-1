@@ -2,20 +2,18 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
-	"net"
 	"strconv"
 	"strings"
 	"time"
+	"log"
+	"encoding/json"
 	
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -30,7 +28,7 @@ type regionalMessage struct {
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 	keygenNumber := request.KeygenNumber
-	fmt.Printf("Received notification: %v keys generated\n", keygenNumber)
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas")
 	return &emptypb.Empty{}, nil
 }
 
@@ -38,7 +36,7 @@ func (s *server)SendResponseToRegionalServer(ctx context.Context, request *betak
 	accepted := request.Accepted
 	denied := request.Denied
 	targetServerName := request.TargetServerName
-	fmt.Printf("Se inscribieron cupos en el servidor %v: %v inscritos, %v denegados\n", targetServerName, accepted, denied)
+	log.Println("Se inscribieron cupos en el servidor" ,targetServerName, ":" ,accepted, "inscritos," ,denied, "denegados")
 	return &emptypb.Empty{}, nil
 }
 
@@ -194,28 +192,7 @@ func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 }
 
 func main() {
-	// Create and set up gRPC server
-	grpcServer := grpc.NewServer()
-
-	betakeys.RegisterBetakeysServiceServer(grpcServer, &server{})
-
-	reflection.Register(grpcServer)
-
-	listener, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		fmt.Printf("Failed to listen: %v\n", err)
-		return
-	}
-
-	// Start gRPC server
-	fmt.Println("Starting gRPC server on port: 50051")
-	go func() {
-		if err := grpcServer.Serve(listener); err != nil {
-			fmt.Printf("Failed to serve: %v\n", err)
-			return
-		}
-	}()
-
+	
 	// Generate keys and read start up parameters
 	filePath := "central/parametros_de_inicio.txt"
 
@@ -228,18 +205,12 @@ func main() {
 	log.Println("Se generaron" ,keys, "llaves")
 	// Begin iterations
 	var count int = 0
-	for ite != 0 {
-		count++
+	for count != ite {
 		if ite == -1{
-			fmt.Printf("Generacion %v/%v\n", count, "infinito")
+			log.Println("Generacion",count+1,"/infinito")
+		} else {
+			log.Println("Generacion" ,count+1, "/" ,ite)
 		}
-		if ite > 0 {
-			fmt.Printf("Generacion %v/%v\n", count, ite)
-		}
-
-		keys := keygen(minKey, maxKey)
-		
-		log.Printf("%v llaves generadas\n", keys)
 
 		// 50051: AMERICA, 50052: ASIA, 50053: EUROPA, 50054: OCEANIA, 
 		serverAddresses := []string{"localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054"}
@@ -273,6 +244,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error al setear RabbitMQ %v", err)
 		}
+		defer rabbitChannel.Close()
 
 		// Start RabbitMQ message handler
 		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
