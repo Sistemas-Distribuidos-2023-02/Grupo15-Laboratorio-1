@@ -291,8 +291,6 @@ func main() {
 			}
 		}
 
-
-
 		// Start RabbitMQ message handler
 		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
 		// The message handler will then process the messages and send the results to the regional servers
