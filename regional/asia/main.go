@@ -30,7 +30,8 @@ func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.K
 
 	keygenNumber := request.KeygenNumber
 	ServerName := s.serverName
-	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central")
+	UsersNumber := s.keys
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional")
 
 	if err := enviarUsuariosAQueue(int(keygenNumber), ServerName); err != nil {
 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
@@ -90,8 +91,7 @@ type MensajeRegistro struct {
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
-	// amqp://usuario:contraseña@localhost:5673/   
-	
+	// amqp://usuario:contraseña@localhost:5673/   PUEDE SER PA
 
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 	// Declarar una cola
 	q, err := ch.QueueDeclare(
-		"usuarios_registrados", // Nombre de la cola
+		"keyVolunteers", // Nombre de la cola
 		false,                  // Durable
 		false,                  // Auto-borrado
 		false,                  // Exclusivo
@@ -149,7 +149,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "regional/asia/parametros_de_inicio.txt"
+	filePath := "./parametros_de_inicio.txt"
 	parametroInicio, err := obtenerParametroInicio(filePath)
 	if err != nil {
 		log.Fatalf("Error al leer archivo parametros: %v", err)
@@ -172,14 +172,12 @@ func main() {
 	reflection.Register(grpcServer)
 
 	listener, err := net.Listen("tcp", ":50052")
-
 	if err != nil {
 		log.Fatalf("Error al escuchar tcp: %v", err)
 	}
 
 	// Start gRPC server
 	fmt.Println("Starting gRPC server on port: 50052")
-
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Error al Serve: %v", err)
 	}

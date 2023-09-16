@@ -149,7 +149,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "regional/america/parametros_de_inicio.txt"
+	filePath := "./parametros_de_inicio.txt"
 	parametroInicio, err := obtenerParametroInicio(filePath)
 	if err != nil {
 		log.Fatalf("Error al leer archivo parametros: %v", err)
