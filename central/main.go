@@ -11,12 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"log"
-	"encoding/json"
 	
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
