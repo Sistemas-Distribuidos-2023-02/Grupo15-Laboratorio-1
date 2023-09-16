@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 	"os"
+	"sync"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -165,6 +166,8 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 	}
 }
 
+
+
 func main() {
 	// Create and set up gRPC server
 	grpcServer := grpc.NewServer()
@@ -248,6 +251,41 @@ func main() {
 		log.Printf("%v llaves generadas\n", keys)
 
 		// Send notification to regional servers
+		goResults := make(chan error, 4)
+
+		notification := &betakeys.KeyNotification{
+			KeygenNumber: int32(keys),
+		}
+
+		var wg sync.WaitGroup
+
+		sendKeygenNotification := func(client betakeys.BetakeysServiceClient){
+			defer wg.Done()
+
+			_, err := client.NotifyRegionalServers(context.Background(), notification)
+			if err != nil {
+				fmt.Printf("failed to send keygen notification to regional server: %v\n", err)
+				goResults <- err
+			} else {
+				goResults <- nil
+			}
+		}
+
+		wg.Add(4)
+		for _, client := range clients {
+			go sendKeygenNotification(client)
+		}
+		wg.Wait()
+
+		close(goResults)
+
+		for result := range goResults {
+			if result != nil {
+				fmt.Printf("failed to send keygen notification to regional server: %v\n", result)
+				return
+			}
+		}
+
 
 
 		// Start RabbitMQ message handler
