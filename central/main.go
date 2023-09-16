@@ -23,7 +23,7 @@ type server struct {
 
 type regionalMessage struct {
 	ServerName string `json:"NombreServidor"`
-	Content string `json:"Usuarios"`
+	Content int `json:"Usuarios"`
 }
 
 func (s *server) NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
@@ -111,16 +111,16 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 
 func SetupRabbitMQ()(*amqp.Channel, error){
 	//RabbitMQ server connection
-	const rabbitmqURL = "amqp://guest:guest@localhost:25672/"
+	const rabbitmqURL = "amqp://guest:guest@localhost:5673/"
 
 	rabbitConn, err := amqp.Dial(rabbitmqURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to rabbitmq server: %v", err)
+		return nil, err
 	}
 
 	rabbitChannel, err := rabbitConn.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open a rabbitmq channel: %v", err)
+		return nil, err
 	}
 
 	// RabbitMQ queue declaration
@@ -135,7 +135,7 @@ func SetupRabbitMQ()(*amqp.Channel, error){
 		nil,	// arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to declare rabbitmq queue: %v", err)
+		return nil, err
 	}
 
 	return rabbitChannel, nil
@@ -167,7 +167,7 @@ func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 		}
 
 		regionalServerName := strings.TrimSpace(message.ServerName)
-		numUsers, err := strconv.Atoi(strings.TrimSpace(message.Content))
+		numUsers := message.Content
 		if err != nil {
 			fmt.Printf("invalid message format from regional servers: %v\n", err)
 			return
@@ -212,27 +212,37 @@ func main() {
 			log.Println("Generacion" ,count+1, "/" ,ite)
 		}
 
-		// Send notification to regional servers
-		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
-		if err != nil {
-			log.Fatalf("Fallo en conectar gRPC server: %v", err)
+		// 50051: AMERICA, 50052: ASIA, 50053: EUROPA, 50054: OCEANIA, 
+		serverAddresses := []string{"localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054"}
+
+		for _, serverAddress := range serverAddresses {
+			conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+			if err != nil {
+				log.Fatalf("Fallo en conectar gRPC server en %s: %v", serverAddress, err)
+			}
+			defer conn.Close()
+
+			// Crea un cliente para el servicio gRPC en cada servidor
+			client := betakeys.NewBetakeysServiceClient(conn)
+
+			// Crea una notificación
+			notification := &betakeys.KeyNotification{
+				KeygenNumber: int32(keys), // Asegúrate de definir "keys" antes de usarlo
+				// Otros campos de la notificación, si los hay
+			}
+
+			// Envía la notificación al servidor actual
+			_, err = client.NotifyRegionalServers(context.Background(), notification)
+			if err != nil {
+				log.Fatalf("Error al enviar notificación al servidor en %s: %v", serverAddress, err)
+			}
 		}
 
-		// NotifyRegionalServers, enviar llaves disp
-		client := betakeys.NewBetakeysServiceClient(conn)
-		notification := &betakeys.KeyNotification{
-			KeygenNumber: int32(keys),
-		}
-		_, err = client.NotifyRegionalServers(context.Background(), notification)
-		if err != nil {
-			log.Fatalf("Fallo en enviar notificacion: %v", err)
-		}
 
 		// Set up RabbitMQ
 		rabbitChannel, err := SetupRabbitMQ() // queueName = "keyVolunteers"
 		if err != nil {
-			fmt.Printf("Failed to set up RabbitMQ: %v", err)
-			return
+			log.Fatalf("Error al setear RabbitMQ %v", err)
 		}
 		defer rabbitChannel.Close()
 

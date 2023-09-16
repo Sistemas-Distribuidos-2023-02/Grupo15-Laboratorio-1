@@ -1,10 +1,12 @@
-FROM golang:1.18
+FROM rabbitmq:3.9.13
 
-WORKDIR /app
+ENV RABBITMQ_DEFAULT_USER=guest
+ENV RABBITMQ_DEFAULT_PASS=guest
+ENV RABBITMQ_DEFAULT_VHOST=/
+ENV RABBITMQ_NODE_PORT=5673
+ENV RABBITMQ_HTTP_PORT=15673
 
-COPY go.mod .
-COPY rabbitmq/rabbitmq.go .
 
-RUN go build -o bin .
+EXPOSE 5673 15673
 
-ENTRYPOINT [ "/app/bin" ]
+CMD ["rabbitmq-server"]
