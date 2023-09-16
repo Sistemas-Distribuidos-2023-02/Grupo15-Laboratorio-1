@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net"
 	"strconv"
 	"time"
+	"log"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
 	"github.com/streadway/amqp"
@@ -57,11 +57,10 @@ func (s *server) SendResponseToRegionalServer (ctx context.Context, request *bet
 	}
 
 	return &emptypb.Empty{}, nil
-
 }
 
 func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
-	contenido, err := ioutil.ReadFile(nombreArchivo)
+    contenido, err := ioutil.ReadFile(nombreArchivo)
 	if err != nil {
 		return 0, err
 	}
@@ -69,7 +68,7 @@ func obtenerParametroInicio(nombreArchivo string) (parametro int, err error) {
 	if err != nil {
 		return 0, err
 	}
-	return parametroInicio, nil
+    return parametroInicio, nil
 }
 
 func generarValorAleatorio(min, max int) int {
@@ -78,7 +77,7 @@ func generarValorAleatorio(min, max int) int {
 }
 
 func CantidadUsuarios(parametrosInicio int) int {
-	aux := float64(parametrosInicio) / 2
+	aux := float64(parametrosInicio)/2
 	min := int(aux - 0.2*aux)
 	max := int(aux + 0.2*aux)
 	return generarValorAleatorio(min, max)
@@ -92,8 +91,7 @@ type MensajeRegistro struct {
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
-
-
+	// amqp://usuario:contraseña@localhost:5673/   PUEDE SER PA
 
 	if err != nil {
 		return err
@@ -151,7 +149,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "./parametros_de_inicio.txt"
+	filePath := "regional/america/parametros_de_inicio.txt"
 	parametroInicio, err := obtenerParametroInicio(filePath)
 	if err != nil {
 		log.Fatalf("Error al leer archivo parametros: %v", err)
@@ -162,7 +160,6 @@ func main() {
 	log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
 
 	// Receive notification from central server	aa
-
 	grpcServer := grpc.NewServer()
 
 	keyServer := &server{
@@ -174,16 +171,15 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	listener, err := net.Listen("tcp", ":50052")
+	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Error al escuchar tcp: %v", err)
 	}
 
 	// Start gRPC server
-	fmt.Println("Starting gRPC server on port: 50052")
+	fmt.Println("Starting gRPC server on port: 50051")
 	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("Error al Server: %v", err)
+		log.Fatalf("Error al Serve: %v", err)
 	}
-
 
 }
