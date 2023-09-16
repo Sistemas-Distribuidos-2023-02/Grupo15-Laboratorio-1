@@ -175,6 +175,7 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 		msg.Ack(false)
 
 	}
+	return
 }
 
 
@@ -190,7 +191,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("Fallo en conectar gRPC server en %s: %v", serverAddress, err)
 			}
-			defer conn.Close()
+			// defer conn.Close()
 
 			// Crea un cliente para el servicio gRPC en cada servidor
 			client := betakeys.NewBetakeysServiceClient(conn)
@@ -255,43 +256,50 @@ func main() {
 		keys := keygen(minKey, maxKey)
 		log.Printf("%v llaves generadas\n", keys)
 
-		// Send notification to regional servers
-		goResults := make(chan error, 4)
-
 		notification := &betakeys.KeyNotification{
 			KeygenNumber: int32(keys),
 		}
 
-		var wg sync.WaitGroup
+		client := betakeys.NewBetakeysServiceClient(conn)
 
-		sendKeygenNotification := func(client betakeys.BetakeysServiceClient){
-			defer wg.Done()
+		_, err := client.NotifyRegionalServers(context.Background(), notification)
+		
 
-			_, err := client.NotifyRegionalServers(context.Background(), notification)
-			if err != nil {
-				fmt.Printf("failed to send keygen notification to regional server: %v\n", err)
-				goResults <- err
-			} else {
-				goResults <- nil
-			}
-		}
+		// // Send notification to regional servers
+		// goResults := make(chan error, 4)
 
-		wg.Add(4)
-		for _, client := range clients {
-			go sendKeygenNotification(client)
-		}
-		wg.Wait()
+		// notification := &betakeys.KeyNotification{
+		// 	KeygenNumber: int32(keys),
+		// }
 
-		close(goResults)
+		// var wg sync.WaitGroup
 
-		for result := range goResults {
-			if result != nil {
-				fmt.Printf("failed to send keygen notification to regional server: %v\n", result)
-				return
-			}
-		}
+		// sendKeygenNotification := func(client betakeys.BetakeysServiceClient){
+		// 	defer wg.Done()
 
+		// 	_, err := client.NotifyRegionalServers(context.Background(), notification)
+		// 	if err != nil {
+		// 		fmt.Printf("failed to send keygen notification to regional server: %v\n", err)
+		// 		goResults <- err
+		// 	} else {
+		// 		goResults <- nil
+		// 	}
+		// }
 
+		// wg.Add(4)
+		// for _, client := range clients {
+		// 	go sendKeygenNotification(client)
+		// }
+		// wg.Wait()
+
+		// close(goResults)
+
+		// for result := range goResults {
+		// 	if result != nil {
+		// 		fmt.Printf("failed to send keygen notification to regional server: %v\n", result)
+		// 		return
+		// 	}
+		// }
 
 		// Start RabbitMQ message handler
 		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
