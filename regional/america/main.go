@@ -9,8 +9,6 @@ import (
 	"math/rand"
 	"net"
 	"strconv"
-	//"strings"
-
 	"time"
 
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
@@ -32,7 +30,8 @@ func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.K
 
 	keygenNumber := request.KeygenNumber
 	ServerName := s.serverName
-	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central")
+	UsersNumber := s.keys
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional")
 
 	if err := enviarUsuariosAQueue(int(keygenNumber), ServerName); err != nil {
 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
@@ -92,7 +91,9 @@ type MensajeRegistro struct {
 
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
-	conn, err := amqp.Dial("amqp://usuario:contraseña@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
+	// amqp://usuario:contraseña@localhost:5673/   PUEDE SER PA
+
 	if err != nil {
 		return err
 	}
@@ -107,7 +108,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 	// Declarar una cola
 	q, err := ch.QueueDeclare(
-		"usuarios_registrados", // Nombre de la cola
+		"keyVolunteers", // Nombre de la cola
 		false,                  // Durable
 		false,                  // Auto-borrado
 		false,                  // Exclusivo
