@@ -171,7 +171,6 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 		msg.Ack(false)
 
 	}
-	return
 }
 
 
@@ -187,7 +186,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("Fallo en conectar gRPC server en %s: %v", serverAddress, err)
 			}
-			// defer conn.Close()
+			defer conn.Close()
 
 			// Crea un cliente para el servicio gRPC en cada servidor
 			client := betakeys.NewBetakeysServiceClient(conn)
@@ -252,43 +251,34 @@ func main() {
 		keys := keygen(minKey, maxKey)
 		log.Printf("%v llaves generadas\n", keys)
 
+		// Send notification to regional servers
+		goResults := make(chan error, 4)
+
 		notification := &betakeys.KeyNotification{
 			KeygenNumber: int32(keys),
 		}
 
-		client := betakeys.NewBetakeysServiceClient(conn)
+		var wg sync.WaitGroup
 
-		_, err := client.NotifyRegionalServers(context.Background(), notification)
-		
+		sendKeygenNotification := func(client betakeys.BetakeysServiceClient){
+			defer wg.Done()
 
-		// // Send notification to regional servers
-		// goResults := make(chan error, 4)
+			_, err := client.NotifyRegionalServers(context.Background(), notification)
+			if err != nil {
+				fmt.Printf("failed to send keygen notification to regional server: %v\n", err)
+				goResults <- err
+			} else {
+				goResults <- nil
+			}
+		}
 
-		// notification := &betakeys.KeyNotification{
-		// 	KeygenNumber: int32(keys),
-		// }
+		wg.Add(4)
+		for _, client := range clients {
+			go sendKeygenNotification(client)
+		}
+		wg.Wait()
 
-		// var wg sync.WaitGroup
-
-		// sendKeygenNotification := func(client betakeys.BetakeysServiceClient){
-		// 	defer wg.Done()
-
-		// 	_, err := client.NotifyRegionalServers(context.Background(), notification)
-		// 	if err != nil {
-		// 		fmt.Printf("failed to send keygen notification to regional server: %v\n", err)
-		// 		goResults <- err
-		// 	} else {
-		// 		goResults <- nil
-		// 	}
-		// }
-
-		// wg.Add(4)
-		// for _, client := range clients {
-		// 	go sendKeygenNotification(client)
-		// }
-		// wg.Wait()
-
-		// close(goResults)
+		close(goResults)
 
 		for result := range goResults {
 			if result != nil {
