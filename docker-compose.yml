@@ -28,4 +28,4 @@ services:
     image: rabbitmq:latest
     ports:
       - "5673:5673"
-      - "15672:15672"
+      - "15673:15673"
