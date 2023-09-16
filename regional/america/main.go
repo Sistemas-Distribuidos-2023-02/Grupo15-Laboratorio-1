@@ -93,6 +93,9 @@ type MensajeRegistro struct {
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
+
+
+
 	if err != nil {
 		return err
 	}
@@ -107,7 +110,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 	// Declarar una cola
 	q, err := ch.QueueDeclare(
-		"usuarios_registrados", // Nombre de la cola
+		"keyVolunteers", // Nombre de la cola
 		false,                  // Durable
 		false,                  // Auto-borrado
 		false,                  // Exclusivo
