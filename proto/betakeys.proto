@@ -16,15 +16,6 @@ message ResponseToRegionalServer {
     string targetServerName = 3;
 }
 
-service KeygenNotificationService {
-    rpc EnviarNotificacion(KeyNotification) returns (KeygenResponse);
-}
-
-message KeygenResponse {
-    bool exito = 1;
-    string mensaje = 2;
-}
-
 service BetakeysService {
     rpc NotifyRegionalServers(KeyNotification) returns (google.protobuf.Empty);
     rpc SendResponseToRegionalServer(ResponseToRegionalServer) returns (google.protobuf.Empty);
