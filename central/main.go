@@ -254,7 +254,7 @@ func main() {
 		log.Printf("%v llaves generadas\n", keys)
 
 		// Send notification to regional servers
-		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+		conn, err := grpc.Dial("localhost:50052", grpc.WithInsecure())
 		if err != nil {
 			fmt.Printf("Failed to connect to gRPC server: %v\n", err)
 			return
