@@ -2,18 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
+	//"net"
 	"strconv"
 	"strings"
 	"time"
-	"log"
-	"encoding/json"
-	
-	amqp "github.com/rabbitmq/amqp091-go"
+	"os"
+
 	"github.com/Sistemas-Distribuidos-2023-02/Grupo15-Laboratorio-1/proto/betakeys"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -109,39 +112,7 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 	return nil
 }
 
-func SetupRabbitMQ()(*amqp.Channel, error){
-	//RabbitMQ server connection
-	const rabbitmqURL = "amqp://guest:guest@localhost:5673/"
-
-	rabbitConn, err := amqp.Dial(rabbitmqURL)
-	if err != nil {
-		return nil, err
-	}
-
-	rabbitChannel, err := rabbitConn.Channel()
-	if err != nil {
-		return nil, err
-	}
-
-	// RabbitMQ queue declaration
-	queueName := "keyVolunteers"
-
-	_, err = rabbitChannel.QueueDeclare(
-		queueName,
-		false,	// durable
-		false,	// delete when unused
-		false,	// exclusive
-		false,	// no-wait
-		nil,	// arguments
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return rabbitChannel, nil
-}
-
-func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int){
+func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKeys *int, logFile *os.File){
 	// Consumer
 	msgs, err := rabbitChannel.Consume(
 		queueName,
@@ -173,10 +144,13 @@ func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			return
 		}
 
-		fmt.Printf("Mensaje asincrono de servidor %v recibido. Numero de usuarios recibido: %v", regionalServerName, numUsers)
+
+		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
+		
+		log.Printf("Se han registrado %v usuarios, %v solicitados, %v denegados.\n", numRegistered, numUsers, numIgnored)
 
 		// Send results to regional server
 		err = sendResultsToRegionalServer(regionalServerName, int32(numRegistered), int32(numIgnored))
@@ -192,8 +166,30 @@ func RabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 }
 
 func main() {
-	
-	// Generate keys and read start up parameters
+	// Create and set up gRPC server
+	grpcServer := grpc.NewServer()
+
+	betakeys.RegisterBetakeysServiceServer(grpcServer, &server{})
+
+	reflection.Register(grpcServer)
+
+	// 50051: AMERICA, 50052: ASIA, 50053: EUROPA, 50054: OCEANIA, 
+	serverAddresses := []string{"localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054"}
+	clients := []betakeys.BetakeysServiceClient{}
+
+	for _, serverAddress := range serverAddresses {
+		conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+			if err != nil {
+				log.Fatalf("Fallo en conectar gRPC server en %s: %v", serverAddress, err)
+			}
+			defer conn.Close()
+
+			// Crea un cliente para el servicio gRPC en cada servidor
+			client := betakeys.NewBetakeysServiceClient(conn)
+			clients = append(clients, client)
+
+	}
+	// Read start up parameters
 	filePath := "./parametros_de_inicio.txt"
 
 	minKey, maxKey, ite, err := startupParameters(filePath) // the "ite" variable is not used yet in this version of the code, it will be used in later implementation
@@ -201,8 +197,44 @@ func main() {
 		log.Fatalf("Error al leer archivo parametros: %v", err)
 	}
 
-	keys := keygen(minKey, maxKey)
-	log.Println("Se generaron" ,keys, "llaves")
+	// Connect to RabbitMQ server
+	const rabbitmqURL = "amqp://guest:guest@localhost:5673/"
+	rabbitConn, err := amqp.Dial(rabbitmqURL)
+    if err != nil {
+        log.Fatalf("Failed to connect to RabbitMQ server: %v", err)
+    }
+    defer rabbitConn.Close()
+
+    rabbitChannel, err := rabbitConn.Channel()
+    if err != nil {
+        log.Fatalf("Failed to open a RabbitMQ channel: %v", err)
+    }
+    defer rabbitChannel.Close()
+
+	// RabbitMQ queue declaration
+	queueName := "keyVolunteers"
+
+	_, err = rabbitChannel.QueueDeclare(
+        queueName,
+        false, // durable
+        false, // delete when unused
+        false, // exclusive
+        false, // no-wait
+        nil,   // arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare RabbitMQ queue: %v", err)
+    }
+
+	// Prepare logging file
+	logFile, err := os.OpenFile("central.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("Failed to open log file: %v\n", err)
+		return
+	}
+	log.SetOutput(logFile)
+
+	
 	// Begin iterations
 	var count int = 0
 	for count != ite {
@@ -212,44 +244,16 @@ func main() {
 			log.Println("Generacion" ,count+1, "/" ,ite)
 		}
 
-		// 50051: AMERICA, 50052: ASIA, 50053: EUROPA, 50054: OCEANIA, 
-		serverAddresses := []string{"localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054"}
+		keys := keygen(minKey, maxKey)
+		log.Printf("%v llaves generadas\n", keys)
 
-		for _, serverAddress := range serverAddresses {
-			conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
-			if err != nil {
-				log.Fatalf("Fallo en conectar gRPC server en %s: %v", serverAddress, err)
-			}
-			defer conn.Close()
+		// Send notification to regional servers
 
-			// Crea un cliente para el servicio gRPC en cada servidor
-			client := betakeys.NewBetakeysServiceClient(conn)
-
-			// Crea una notificación
-			notification := &betakeys.KeyNotification{
-				KeygenNumber: int32(keys), // Asegúrate de definir "keys" antes de usarlo
-				// Otros campos de la notificación, si los hay
-			}
-
-			// Envía la notificación al servidor actual
-			_, err = client.NotifyRegionalServers(context.Background(), notification)
-			if err != nil {
-				log.Fatalf("Error al enviar notificación al servidor en %s: %v", serverAddress, err)
-			}
-		}
-
-
-		// Set up RabbitMQ
-		rabbitChannel, err := SetupRabbitMQ() // queueName = "keyVolunteers"
-		if err != nil {
-			log.Fatalf("Error al setear RabbitMQ %v", err)
-		}
-		defer rabbitChannel.Close()
 
 		// Start RabbitMQ message handler
 		// The rabbitMQMessageHandler function is the one that will go through the messages from the regional servers waiting in the RabbitMQ queue
 		// The message handler will then process the messages and send the results to the regional servers
-		RabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys)
+		rabbitMQMessageHandler(rabbitChannel, "keyVolunteers", &keys, logFile)
 
 		count++
 	}
