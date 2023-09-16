@@ -7,6 +7,14 @@
 
 # Getting started
 
+## Comandos docker
+
+### RabbitMQ
+
+Armar imagen: docker build -t \[nombre-imagen-rabbit\]:latest \[path/a/dockerfile\]
+
+Armar contenedor con la imagen: docker run -d --name \[nombre-container\] -p 5673:5673 -p 15673:15673 \[nombre-imagen-rabbit\]:\[version\]
+
 ## Nuestras VMs
 
 Máquina - Contraseña

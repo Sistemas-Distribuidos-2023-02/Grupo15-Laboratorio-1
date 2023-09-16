@@ -92,7 +92,8 @@ type MensajeRegistro struct {
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
-	// amqp://usuario:contraseña@localhost:5673/   PUEDE SER PA
+
+
 
 	if err != nil {
 		return err
@@ -150,7 +151,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "regional/america/parametros_de_inicio.txt"
+	filePath := "./parametros_de_inicio.txt"
 	parametroInicio, err := obtenerParametroInicio(filePath)
 	if err != nil {
 		log.Fatalf("Error al leer archivo parametros: %v", err)
@@ -173,15 +174,15 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		log.Fatalf("Error al escuchar tcp: %v", err)
 	}
 
 	// Start gRPC server
-	fmt.Println("Starting gRPC server on port: 50051")
+	fmt.Println("Starting gRPC server on port: 50052")
 	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("Error al Serve: %v", err)
+		log.Fatalf("Error al Server: %v", err)
 	}
 
 

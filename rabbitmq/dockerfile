@@ -9,4 +9,5 @@ ENV RABBITMQ_HTTP_PORT=15673
 
 EXPOSE 5673 15673
 
+
 CMD ["rabbitmq-server"]
