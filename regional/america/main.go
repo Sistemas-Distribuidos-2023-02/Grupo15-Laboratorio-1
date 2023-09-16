@@ -172,15 +172,15 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		log.Fatalf("Error al escuchar tcp: %v", err)
 	}
 
 	// Start gRPC server
-	fmt.Println("Starting gRPC server on port: 50051")
+	fmt.Println("Starting gRPC server on port: 50052")
 	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("Error al Serve: %v", err)
+		log.Fatalf("Error al Server: %v", err)
 	}
 
 
