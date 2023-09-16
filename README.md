@@ -7,6 +7,14 @@
 
 # Getting started
 
+## Comandos docker
+
+### RabbitMQ
+
+Armar imagen: docker build -t \[nombre-imagen-rabbit\]:latest \[path/a/dockerfile\]
+
+Armar contenedor con la imagen: docker run -d --name \[nombre-container\] -p 5673:5673 -p 15673:15673 \[nombre-imagen-rabbit\]:\[version\]
+
 ## Nuestras VMs
 
 Máquina - Contraseña
@@ -28,9 +36,11 @@ Máquina - Contraseña
 * ~~Notificar con comunicacion **sincrona/gRPC** a los S.Regionales el # de llaves~~ Basicamente listo pero falta probarlo con los servidores regionales para saber si funciona/falta algo
 * ~~Recibir solicitudes de llaves de S.Regionales con comunicacion **asincrona/RabbitMQ**~~ Idem que punto anterior
 * ~~Registrar S.Regional y # de llaves entregadas y procesar cantidad de llaves de S.Central~~ Listo
-* Escribir en archivo 
+* ~~Escribir en archivo~~ Listo
 * ~~Enviar respuesta de forma **sincrona/gRPC** a S.Regionales~~ Listo pero sin testear
-* Repetir segun iteraciones indicadas en archivo txt -> En progreso
+* ~~Repetir segun iteraciones indicadas en archivo txt~~ Listo
+* ~~Contenedor Docker~~
+* Testing
 
 ### S. Regional
 

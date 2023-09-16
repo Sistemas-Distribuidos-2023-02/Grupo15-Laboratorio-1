@@ -38,4 +38,5 @@ func main() {
 	log.Printf("Queue %s declared successfully", queueName)
 
 	// You can now use the 'channel' for other operations or continue with your application logic.
+
 }
