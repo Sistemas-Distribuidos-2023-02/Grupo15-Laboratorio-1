@@ -57,14 +57,11 @@ CMD if [ "$SERVER_TYPE" = "central" ]; then \
         go build -o oceania-server; \
         RUN go clean; \ 
         ./oceania-server; \
-    elif [ "$SERVER_TYPE" = "rabbitmq" ]; then \
-        # Add RabbitMQ build instructions here \
-        apt-get update && apt-get install -y rabbitmq-server; \
     else \
         echo "Invalid SERVER_TYPE argument. Use 'central', 'regional', or 'rabbitmq'."; \
     fi
 
-# Final image for the server or RabbitMQ
+# Final image for the server
 FROM ${BASE_IMAGE}
 
 # Copy the built server or RabbitMQ from the builder stage
