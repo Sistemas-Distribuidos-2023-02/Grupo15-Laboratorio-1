@@ -20,7 +20,6 @@ import (
 
 
 type server struct {
-	keys int
 	serverName string
 	betakeys.UnimplementedBetakeysServiceServer
 }
@@ -28,10 +27,20 @@ type server struct {
 
 func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 
+	filePath := "./parametros_de_inicio.txt"
+	parametroInicio, err := obtenerParametroInicio(filePath)
+	if err != nil {
+		log.Fatalf("Error al leer archivo parametros: %v", err)
+	}
+
+	// Generate keys 
+	UsersNumber := CantidadUsuarios(parametroInicio)
+	log.Println("Cantidad de usuarios es" ,UsersNumber)
+
 	keygenNumber := request.KeygenNumber
 	ServerName := s.serverName
-	UsersNumber := s.keys
-	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional")
+	// UsersNumber := s.keys
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional",ServerName)
 
 	if err := enviarUsuariosAQueue(int(keygenNumber), ServerName); err != nil {
 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
@@ -47,14 +56,14 @@ func (s *server) SendResponseToRegionalServer (ctx context.Context, request *bet
 	targetServerName := request.TargetServerName
 	log.Println("Se inscribieron cupos en el servidor" ,targetServerName, ":" ,accepted, "inscritos," ,denied, "denegados")
 	
-	if denied == 0 {
-		return &emptypb.Empty{}, nil
-	} else {
-		keygenNumber := denied
-		if err := enviarUsuariosAQueue(int(keygenNumber), targetServerName); err != nil {
-			log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
-		}
-	}
+	// if denied == 0 {
+	// 	return &emptypb.Empty{}, nil
+	// } else {
+	// 	keygenNumber := denied
+	// 	if err := enviarUsuariosAQueue(int(keygenNumber), targetServerName); err != nil {
+	// 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
+	// 	}
+	// }
 
 	return &emptypb.Empty{}, nil
 }
@@ -149,21 +158,20 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "./parametros_de_inicio.txt"
-	parametroInicio, err := obtenerParametroInicio(filePath)
-	if err != nil {
-		log.Fatalf("Error al leer archivo parametros: %v", err)
-	}
+	// filePath := "./parametros_de_inicio.txt"
+	// parametroInicio, err := obtenerParametroInicio(filePath)
+	// if err != nil {
+	// 	log.Fatalf("Error al leer archivo parametros: %v", err)
+	// }
 
-	// Generate keys 
-	cantidadUsuarios := CantidadUsuarios(parametroInicio)
-	log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
+	// // Generate keys 
+	// cantidadUsuarios := CantidadUsuarios(parametroInicio)
+	// log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
 
 	// Receive notification from central server	aa
 	grpcServer := grpc.NewServer()
 
 	keyServer := &server{
-		keys: cantidadUsuarios,
 		serverName: "asia",
 	}
 

@@ -20,7 +20,6 @@ import (
 
 
 type server struct {
-	keys int
 	serverName string
 	betakeys.UnimplementedBetakeysServiceServer
 }
@@ -28,10 +27,20 @@ type server struct {
 
 func (s *server) NotifyRegionalServers (ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 
+	filePath := "./parametros_de_inicio.txt"
+	parametroInicio, err := obtenerParametroInicio(filePath)
+	if err != nil {
+		log.Fatalf("Error al leer archivo parametros: %v", err)
+	}
+
+	// Generate keys 
+	UsersNumber := CantidadUsuarios(parametroInicio)
+	log.Println("Cantidad de usuarios es" ,UsersNumber)
+
 	keygenNumber := request.KeygenNumber
 	ServerName := s.serverName
-	UsersNumber := s.keys
-	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional")
+	// UsersNumber := s.keys
+	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas por central y" ,UsersNumber, "de servidor regional",ServerName)
 
 	if err := enviarUsuariosAQueue(int(keygenNumber), ServerName); err != nil {
 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
@@ -47,14 +56,14 @@ func (s *server) SendResponseToRegionalServer (ctx context.Context, request *bet
 	targetServerName := request.TargetServerName
 	log.Println("Se inscribieron cupos en el servidor" ,targetServerName, ":" ,accepted, "inscritos," ,denied, "denegados")
 	
-	if denied == 0 {
-		return &emptypb.Empty{}, nil
-	} else {
-		keygenNumber := denied
-		if err := enviarUsuariosAQueue(int(keygenNumber), targetServerName); err != nil {
-			log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
-		}
-	}
+	// if denied == 0 {
+	// 	return &emptypb.Empty{}, nil
+	// } else {
+	// 	keygenNumber := denied
+	// 	if err := enviarUsuariosAQueue(int(keygenNumber), targetServerName); err != nil {
+	// 		log.Fatalf("Error al comunicar con cola Rabbit: %v", err)
+	// 	}
+	// }
 
 	return &emptypb.Empty{}, nil
 }
@@ -91,7 +100,6 @@ type MensajeRegistro struct {
 func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Conectar a RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
-	// amqp://usuario:contraseña@localhost:5673/   PUEDE SER PA
 
 	if err != nil {
 		return err
@@ -106,8 +114,9 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	defer ch.Close()
 
 	// Declarar una cola
-	q, err := ch.QueueDeclare(
-		"keyVolunteers", // Nombre de la cola
+	queueName := "keyVolunteers"
+	_, err = ch.QueueDeclare(
+		queueName, // Nombre de la cola
 		false,                  // Durable
 		false,                  // Auto-borrado
 		false,                  // Exclusivo
@@ -121,7 +130,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Crear un mensaje en formato JSON
 	mensaje := MensajeRegistro{
 		NombreServidor: servidor,
-		Usuarios:       cantidad,
+		Usuarios: cantidad,
 	}
 
 	// Serializar el mensaje en JSON
@@ -133,7 +142,7 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 	// Publicar el mensaje en la cola
 	err = ch.Publish(
 		"",     // Intercambio (exchange) por defecto
-		q.Name, // Cola a la que se envía el mensaje
+		queueName, // Cola a la que se envía el mensaje
 		false,  // No esperar a la confirmación
 		false,  // No requerir confirmación para la entrega
 		amqp.Publishing{
@@ -149,21 +158,20 @@ func enviarUsuariosAQueue(cantidad int, servidor string) error {
 
 func main() {
 
-	filePath := "./parametros_de_inicio.txt"
-	parametroInicio, err := obtenerParametroInicio(filePath)
-	if err != nil {
-		log.Fatalf("Error al leer archivo parametros: %v", err)
-	}
+	// filePath := "./parametros_de_inicio.txt"
+	// parametroInicio, err := obtenerParametroInicio(filePath)
+	// if err != nil {
+	// 	log.Fatalf("Error al leer archivo parametros: %v", err)
+	// }
 
-	// Generate keys 
-	cantidadUsuarios := CantidadUsuarios(parametroInicio)
-	log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
+	// // Generate keys 
+	// cantidadUsuarios := CantidadUsuarios(parametroInicio)
+	// log.Println("Cantidad de usuarios es" ,cantidadUsuarios)
 
 	// Receive notification from central server	aa
 	grpcServer := grpc.NewServer()
 
 	keyServer := &server{
-		keys: cantidadUsuarios,
 		serverName: "america",
 	}
 
