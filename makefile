@@ -42,5 +42,3 @@ help:
     @echo "  help             - Display this help message"
 
 .PHONY: all docker-central docker-regional docker-rabbit help
-
-.PHONY: all build-central build-regional build-rabbitmq build start stop clean help
