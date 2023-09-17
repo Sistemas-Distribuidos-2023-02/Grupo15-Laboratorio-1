@@ -25,6 +25,11 @@ type regionalMessage struct {
 	Content int `json:"Usuarios"`
 }
 
+type MensajeRegistro struct {
+	NombreServidor string `json:"NombreServidor"`
+	Usuarios       int    `json:"Usuarios"`
+}
+
 func NotifyRegionalServers(ctx context.Context, request *betakeys.KeyNotification) (*emptypb.Empty, error) {
 	keygenNumber := request.KeygenNumber
 	log.Println("Notificacion recibida:", keygenNumber, "llaves generadas")
@@ -101,6 +106,7 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
     }
 
 	conn, err := grpc.Dial(host, grpc.WithInsecure())
+	fmt.Printf("Estoy aca este es el host %s y este el servername %s \n",host, serverName)
 	if err != nil {
 		log.Fatalf("Fallo en conectar gRPC server: %v", err)
 	}
@@ -145,15 +151,16 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 			continue
 		}
 
-		regionalServerName := strings.TrimSpace(message.ServerName)
+		regionalServerName := message.ServerName
 		numUsers := message.Content
+
 		if err != nil {
 			fmt.Printf("invalid message format from regional servers: %v\n", err)
 			return
 		}
 
 
-		fmt.Printf("Mensaje asincrono de servidor %v recibido.", regionalServerName)
+		fmt.Printf("Mensaje asincrono de servidor %s recibido.\n", regionalServerName)
 
 		// Process message
 		numRegistered, numIgnored := messageProcessing(numUsers, numKeys)
@@ -186,7 +193,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("Fallo en conectar gRPC server en %s: %v", serverAddress, err)
 			}
-			defer conn.Close()
+			//defer conn.Close()
 
 			// Crea un cliente para el servicio gRPC en cada servidor
 			client := betakeys.NewBetakeysServiceClient(conn)
@@ -207,13 +214,13 @@ func main() {
     if err != nil {
         log.Fatalf("Failed to connect to RabbitMQ server: %v", err)
     }
-    defer rabbitConn.Close()
+    //defer rabbitConn.Close()
 
     rabbitChannel, err := rabbitConn.Channel()
     if err != nil {
         log.Fatalf("Failed to open a RabbitMQ channel: %v", err)
     }
-    defer rabbitChannel.Close()
+    //defer rabbitChannel.Close()
 
 	// RabbitMQ queue declaration
 	queueName := "keyVolunteers"
