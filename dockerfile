@@ -35,25 +35,25 @@ CMD if [ "$SERVER_TYPE" = "central" ]; then \
         ./central-server; \
     elif [ "$SERVER_TYPE" = "america" ]; then \
         PORT=$AMERICA_PORT; \
-        cp -r regional/america/ .; \
+        cp -r regional/america .; \
         go build -o america-server; \
         RUN go clean; \ 
         ./america-server; \
     elif [ "$SERVER_TYPE" = "asia" ]; then \
         PORT=$ASIA_PORT; \
-        cp -r regional/asia/ .; \
+        cp -r regional/asia .; \
         go build -o asia-server; \
         RUN go clean; \ 
         ./asia-server; \
     elif [ "$SERVER_TYPE" = "europe" ]; then \
         PORT=$EUROPE_PORT; \
-        cp -r regional/europe/ .; \
+        cp -r regional/europe .; \
         go build -o europe-server; \
         RUN go clean; \ 
         ./europe-server; \
     elif [ "$SERVER_TYPE" = "oceania" ]; then \
         PORT=$OCEANIA_PORT; \
-        cp -r regional/oceania/ .; \
+        cp -r regional/oceania .; \
         go build -o oceania-server; \
         RUN go clean; \ 
         ./oceania-server; \
