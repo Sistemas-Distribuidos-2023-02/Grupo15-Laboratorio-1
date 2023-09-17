@@ -6,9 +6,6 @@ ASIA_DOCKER_IMAGE = asia-server
 OCEANIA_DOCKER_IMAGE = oceania-server
 RABBITMQ_DOCKER_IMAGE = rabbitmq-server
 
-# Define Docker Compose file
-DOCKER_COMPOSE_FILE = docker-compose.yml
-
 # Define the default target
 all: help
 
