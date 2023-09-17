@@ -11,7 +11,7 @@ all: help
 
 # Build the central server Docker image
 docker-central:
-    docker build -t $(CENTRAL_DOCKER_IMAGE) --build-arg SERVER_TYPE=central .
+	docker build -t $(CENTRAL_DOCKER_IMAGE) --build-arg SERVER_TYPE=central .
 	docker run -d --name $(CENTRAL_DOCKER_IMAGE) -p 8081:8081 $(CENTRAL_DOCKER_IMAGE)
 
 # Build the regional server Docker images
@@ -27,15 +27,15 @@ docker-regional:
 
 # Build the RabbitMQ server Docker image
 docker-rabbitmq:
-    docker build -t $(RABBITMQ_DOCKER_IMAGE) ./rabbitmq
+	docker build -t $(RABBITMQ_DOCKER_IMAGE) ./rabbitmq
 	docker run -d --name $(RABBITMQ_DOCKER_IMAGE) -p 5673:5673 -p 15673:15673 $(RABBITMQ_DOCKER_IMAGE)
 
 # Usage: make help
 help:
 	@echo "Available targets:"
-    @echo "  docker-central   - Start the Docker code for the central server"
-    @echo "  docker-regional  - Start the Docker code for the regional servers"
-    @echo "  docker-rabbit    - Start the Docker code for RabbitMQ"
-    @echo "  help             - Display this help message"
+	@echo "  docker-central   - Start the Docker code for the central server"
+	@echo "  docker-regional  - Start the Docker code for the regional servers"
+	@echo "  docker-rabbit    - Start the Docker code for RabbitMQ"
+	@echo "  help             - Display this help message"
 
 .PHONY: all docker-central docker-regional docker-rabbit help
