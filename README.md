@@ -30,3 +30,13 @@ Máquina - Contraseña
 * VM2: container-asia
 * VM3: container-europa , container-rabbitmq
 * VM4: container-oceania
+
+## Consideraciones
+
+No nos dio el tiempo, por lo tanto hay errores que no pudimos solucionar. Estos son:
+
+- Por algun motivo, prints en la consola que antes funcionaban sin problema dejaron de aparecer y no sabemos como ni por que.
+
+- El servidor central se queda pegado en su segunda iteracion, antes de procesar los mensajes consumidos por la cola de rabbit. Sospechamos que se debe a que a la cola no le llega ningun mensaje de servidores regionales despues de la primera iteracion, y como esta vacia se queda esperando que le lleguen mensajes.
+
+- Los servidores regionales no restan a los usuarios registrados de su total. Lo hubieramos solucionado pero nos dimos cuenta muy tarde.
