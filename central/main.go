@@ -92,13 +92,13 @@ func sendResultsToRegionalServer(serverName string, numRegistered, numIgnored in
 	host := ""
 	switch serverName {
 	case "america":
-		host = "localhost:50051"
+		host = "dist057:50051"
 	case "asia":
-		host = "localhost:50052"
+		host = "dist058:50052"
 	case "europa":
-		host = "localhost:50053"
+		host = "dist059:50053"
 	case "oceania":
-		host = "localhost:50054"
+		host = "dist060:50054"
 	}
 
 	conn, err := grpc.Dial(host, grpc.WithInsecure())
@@ -193,7 +193,7 @@ func rabbitMQMessageHandler(rabbitChannel *amqp.Channel, queueName string, numKe
 func main() {
 
 	// 50051: AMERICA, 50052: ASIA, 50053: EUROPA, 50054: OCEANIA,
-	serverAddresses := []string{"localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054"}
+	serverAddresses := []string{"dist057:50051", "dist058:50052", "dist059:50053", "dist060:50054"}
 	clients := []betakeys.BetakeysServiceClient{}
 
 	for _, serverAddress := range serverAddresses {
@@ -217,7 +217,7 @@ func main() {
 	}
 
 	// Connect to RabbitMQ server
-	const rabbitmqURL = "amqp://guest:guest@localhost:5673/"
+	const rabbitmqURL = "amqp://guest:guest@dist059:5673/"
 	rabbitConn, err := amqp.Dial(rabbitmqURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ server: %v", err)
