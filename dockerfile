@@ -2,6 +2,14 @@
 ARG BASE_IMAGE=golang:1.18
 FROM ${BASE_IMAGE} AS builder
 
+ARG CENTRAL_PORT=8081
+ARG AMERICA_PORT=50051
+ARG ASIA_PORT=50052
+ARG EUROPE_PORT=50053
+ARG OCEANIA_PORT=50054
+
+ARG SERVER_TYPE
+
 # Set the working directory inside the container
 WORKDIR /app
 
@@ -15,15 +23,6 @@ RUN go mod download
 # Copy the rest of your application code to the container
 COPY . .
 
-# Set the default ports for the central and regional servers
-ARG CENTRAL_PORT=8081
-ARG AMERICA_PORT=50051
-ARG ASIA_PORT=50052
-ARG EUROPE_PORT=50053
-ARG OCEANIA_PORT=50054
-
-# Command to run the appropriate server or RabbitMQ
-ARG SERVER_TYPE
 CMD if [ "$SERVER_TYPE" = "central" ]; then \
         PORT=$CENTRAL_PORT; \
         cd /app/central; \
