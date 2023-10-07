@@ -17,7 +17,7 @@ all: help
 # Build the central server Docker image
 docker-central:
 	docker build -t $(CENTRAL_DOCKER_IMAGE) --build-arg SERVER_TYPE=central .
-	docker run -d --name $(CENTRAL_DOCKER_IMAGE) -p 8081:8081 $(CENTRAL_DOCKER_IMAGE)
+	docker run -d --name $(CENTRAL_DOCKER_IMAGE) -e SERVER_TYPE=central -p 8081:8081 $(CENTRAL_DOCKER_IMAGE)
 
 # Build the regional server Docker images
 docker-regional:
