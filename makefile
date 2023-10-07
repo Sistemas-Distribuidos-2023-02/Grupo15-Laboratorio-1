@@ -21,15 +21,23 @@ docker-central:
 
 # Build the regional server Docker images
 docker-regional:
-	@case "$(SERVER_TYPE)" in \
-		america) PORT=$(AMERICA_PORT);; \
-		asia) PORT=$(ASIA_PORT);; \
-		europa) PORT=$(EUROPE_PORT);; \
-		oceania) PORT=$(OCEANIA_PORT);; \
-		*) echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; exit 1;; \
-	esac; \
-	docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .
-	docker run -d --name $(SERVER_TYPE)-server -p $$PORT:$$PORT $(SERVER_TYPE)-server
+	@if [ "$(SERVER_TYPE)" = "america" ]; then \
+		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
+		docker run -d --name $(SERVER_TYPE)-server -p $(AMERICA_PORT):$(AMERICA_PORT) $(SERVER_TYPE)-server; \
+	elif [ "$(SERVER_TYPE)" = "asia" ]; then \
+		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
+		docker run -d --name $(SERVER_TYPE)-server -p $(ASIA_PORT):$(ASIA_PORT) $(SERVER_TYPE)-server; \
+	elif [ "$(SERVER_TYPE)" = "europa" ]; then \
+		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
+		docker run -d --name $(SERVER_TYPE)-server -p $(EUROPE_PORT):$(EUROPE_PORT) $(SERVER_TYPE)-server; \
+	elif [ "$(SERVER_TYPE)" = "oceania" ]; then \
+		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
+		docker run -d --name $(SERVER_TYPE)-server -p $(OCEANIA_PORT):$(OCEANIA_PORT) $(SERVER_TYPE)-server; \
+	else \
+		echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; \
+		exit 1; \
+	fi
+
 
 # Build the RabbitMQ server Docker image
 docker-rabbitmq:
