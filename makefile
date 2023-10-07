@@ -22,23 +22,23 @@ docker-central:
 # Build the regional server Docker images
 docker-regional:
 	ifeq ($(SERVER_TYPE), america)
-		PORT = $(AMERICA_PORT)
+		PORT := $(AMERICA_PORT)
 	endif
 
 	ifeq ($(SERVER_TYPE), asia)
-		PORT = $(ASIA_PORT)
+		PORT := $(ASIA_PORT)
 	endif
 
 	ifeq ($(SERVER_TYPE), europa)
-		PORT = $(EUROPE_PORT)
+		PORT := $(EUROPE_PORT)
 	endif
 
 	ifeq ($(SERVER_TYPE), oceania)
-		PORT = $(OCEANIA_PORT)
+		PORT := $(OCEANIA_PORT)
 	endif
 
 	docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .
-	docker run -d --name $(SERVER_TYPE)-server -p $(PORT) $(SERVER_TYPE)-server
+	docker run -d --name $(SERVER_TYPE)-server -p $(PORT):$(PORT) $(SERVER_TYPE)-server
 
 # Build the RabbitMQ server Docker image
 docker-rabbitmq:
