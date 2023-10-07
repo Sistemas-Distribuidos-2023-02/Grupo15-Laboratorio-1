@@ -21,22 +21,16 @@ docker-central:
 
 # Build the regional server Docker images
 docker-regional:
-	@if [ "$(SERVER_TYPE)" = "america" ]; then \
-		PORT:=$(AMERICA_PORT); \
-	elif [ "$(SERVER_TYPE)" = "asia" ]; then \
-		PORT:=$(ASIA_PORT); \
-	elif [ "$(SERVER_TYPE)" = "europa" ]; then \
-		PORT:=$(EUROPE_PORT); \
-	elif [ "$(SERVER_TYPE)" = "oceania" ]; then \
-		PORT:=$(OCEANIA_PORT); \
-	else \
-		echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; \
-		exit 1; \
-	fi; \
+    @case "$(SERVER_TYPE)" in \
+        america) PORT=$(AMERICA_PORT);; \
+        asia) PORT=$(ASIA_PORT);; \
+        europa) PORT=$(EUROPE_PORT);; \
+        oceania) PORT=$(OCEANIA_PORT);; \
+        *) echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; exit 1;; \
+    esac; \
+    docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .
+    docker run -d --name $(SERVER_TYPE)-server -p $$PORT:$$PORT $(SERVER_TYPE)-server
 
-	@echo "PORT is set to: $$PORT"
-	docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .
-	docker run -d --name $(SERVER_TYPE)-server -p $$PORT:$$PORT $(SERVER_TYPE)-server
 
 
 
