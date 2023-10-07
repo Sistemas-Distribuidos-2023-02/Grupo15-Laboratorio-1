@@ -21,20 +21,15 @@ docker-central:
 
 # Build the regional server Docker images
 docker-regional:
-    @case "$(SERVER_TYPE)" in \
-        america) PORT=$(AMERICA_PORT);; \
-        asia) PORT=$(ASIA_PORT);; \
-        europa) PORT=$(EUROPE_PORT);; \
-        oceania) PORT=$(OCEANIA_PORT);; \
-        *) echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; exit 1;; \
-    esac; \
-    docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .
-    docker run -d --name $(SERVER_TYPE)-server -p $$PORT:$$PORT $(SERVER_TYPE)-server
-
-
-
-
-
+	@case "$(SERVER_TYPE)" in \
+		america) PORT=$(AMERICA_PORT);; \
+		asia) PORT=$(ASIA_PORT);; \
+		europa) PORT=$(EUROPE_PORT);; \
+		oceania) PORT=$(OCEANIA_PORT);; \
+		*) echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; exit 1;; \
+	esac; \
+	docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .
+	docker run -d --name $(SERVER_TYPE)-server -p $$PORT:$$PORT $(SERVER_TYPE)-server
 
 # Build the RabbitMQ server Docker image
 docker-rabbitmq:
