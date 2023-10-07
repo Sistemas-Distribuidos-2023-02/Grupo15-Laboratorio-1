@@ -22,17 +22,17 @@ docker-central:
 # Build the regional server Docker images
 docker-regional:
 	@if [ "$(SERVER_TYPE)" = "america" ]; then \
-		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
-		docker run -d --name $(SERVER_TYPE)-server -p $(AMERICA_PORT):$(AMERICA_PORT) $(SERVER_TYPE)-server; \
+		docker build -t $(AMERICA_DOCKER_IMAGE) --build-arg SERVER_TYPE=america .; \
+		docker run -d --name $(AMERICA_DOCKER_IMAGE) -p $(AMERICA_PORT):$(AMERICA_PORT) $(AMERICA_DOCKER_IMAGE); \
 	elif [ "$(SERVER_TYPE)" = "asia" ]; then \
-		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
-		docker run -d --name $(SERVER_TYPE)-server -p $(ASIA_PORT):$(ASIA_PORT) $(SERVER_TYPE)-server; \
+		docker build -t $(ASIA_DOCKER_IMAGE) --build-arg SERVER_TYPE=asia .; \
+		docker run -d --name $(ASIA_DOCKER_IMAGE) -p $(ASIA_PORT):$(ASIA_PORT) $(ASIA_DOCKER_IMAGE); \
 	elif [ "$(SERVER_TYPE)" = "europa" ]; then \
-		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
-		docker run -d --name $(SERVER_TYPE)-server -p $(EUROPE_PORT):$(EUROPE_PORT) $(SERVER_TYPE)-server; \
+		docker build -t $(EUROPE_DOCKER_IMAGE) --build-arg SERVER_TYPE=europa .; \
+		docker run -d --name $(EUROPE_DOCKER_IMAGE) -p $(EUROPE_PORT):$(EUROPE_PORT) $(EUROPE_DOCKER_IMAGE); \
 	elif [ "$(SERVER_TYPE)" = "oceania" ]; then \
-		docker build -t $(SERVER_TYPE)-server --build-arg SERVER_TYPE=$(SERVER_TYPE) .; \
-		docker run -d --name $(SERVER_TYPE)-server -p $(OCEANIA_PORT):$(OCEANIA_PORT) $(SERVER_TYPE)-server; \
+		docker build -t $(OCEANIA_DOCKER_IMAGE) --build-arg SERVER_TYPE=oceania .; \
+		docker run -d --name $(OCEANIA_DOCKER_IMAGE) -p $(OCEANIA_PORT):$(OCEANIA_PORT) $(OCEANIA_DOCKER_IMAGE); \
 	else \
 		echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; \
 		exit 1; \
