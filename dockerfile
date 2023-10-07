@@ -41,7 +41,7 @@ CMD if [ "$SERVER_TYPE" = "central" ]; then \
     elif [ "$SERVER_TYPE" = "europa" ]; then \
         PORT=$EUROPE_PORT; \
         cd /app/regional/europa; \
-        go build -o euroa-server; \
+        go build -o europa-server; \
         ./europa-server; \
     elif [ "$SERVER_TYPE" = "oceania" ]; then \
         PORT=$OCEANIA_PORT; \
