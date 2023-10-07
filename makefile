@@ -22,13 +22,13 @@ docker-central:
 # Build the regional server Docker images
 docker-regional:
 	@if [ "$(SERVER_TYPE)" = "america" ]; then \
-		PORT=$(AMERICA_PORT); \
+		PORT=50051; \
 	elif [ "$(SERVER_TYPE)" = "asia" ]; then \
-		PORT=$(ASIA_PORT); \
+		PORT=50052; \
 	elif [ "$(SERVER_TYPE)" = "europa" ]; then \
-		PORT=$(EUROPE_PORT); \
+		PORT=50053; \
 	elif [ "$(SERVER_TYPE)" = "oceania" ]; then \
-		PORT=$(OCEANIA_PORT); \
+		PORT=50054; \
 	else \
 		echo "Invalid SERVER_TYPE argument. Use 'america', 'asia', 'europa', or 'oceania'."; \
 		exit 1; \
