@@ -21,6 +21,7 @@ docker-central:
 
 # Build the regional server Docker images
 docker-regional:
+	@echo "SERVER_TYPE is set to: $(SERVER_TYPE)"
 	@if [ "$(SERVER_TYPE)" = "america" ]; then \
 		docker build -t $(AMERICA_DOCKER_IMAGE) --build-arg SERVER_TYPE=america .; \
 		docker run -d --name $(AMERICA_DOCKER_IMAGE) -p $(AMERICA_PORT):$(AMERICA_PORT) $(AMERICA_DOCKER_IMAGE); \
