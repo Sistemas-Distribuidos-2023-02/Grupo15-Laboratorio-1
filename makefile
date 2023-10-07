@@ -42,7 +42,7 @@ docker-regional:
 
 # Build the RabbitMQ server Docker image
 docker-rabbitmq:
-	docker build -t $(RABBITMQ_DOCKER_IMAGE) ./rabbitmq
+	docker build -t $(RABBITMQ_DOCKER_IMAGE) -f rabbitmq/dockerfile ./rabbitmq
 	docker run -d --name $(RABBITMQ_DOCKER_IMAGE) -p 5673:5673 -p 15673:15673 $(RABBITMQ_DOCKER_IMAGE)
 
 # Usage: make help
